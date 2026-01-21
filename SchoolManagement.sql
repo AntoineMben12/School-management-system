@@ -2,6 +2,7 @@ CREATE DATABASE SchoolManagementSystem;
 
 USE SchoolManagementSystem;
 
+SHOW TABLES;
 -- CREATING SUPER_ADMIN
 CREATE TABLE super_admin(
     super_admin_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -77,7 +78,7 @@ CREATE TABLE classes(
 CREATE TABLE subject(
     subject_id INT PRIMARY KEY AUTO_INCREMENT,
     subject_lenght INT NOT NULL,
-    subject_name VARCHAR(100) NOT NULL,
+    subject_name VARCHAR(100) NOT NULL
 );
 
 -- CREATING TEACHER_SUBJECT_CLASS
@@ -132,6 +133,7 @@ CREATE TABLE marks (
     student_id INT NOT NULL,
     subject_id INT NOT NULL,
     teacher_id INT NOT NULL,
+    classes_id INT NOT NULL,
     ca DECIMAL(5, 2) NOT NULL,
     mark_subtracted_class DECIMAL(5, 2) DEFAULT 0,
     mark_added_class DECIMAL(5, 2) DEFAULT 0,
@@ -143,5 +145,55 @@ CREATE TABLE marks (
     FOREIGN KEY (classes_id) REFERENCES classes(classes_id)
 );
 
--- UNIVERSITY: FINAL_MARK = (((CA * 40 / 100) + (Mark_SUBTRACTED_CLASS +
--- MARk_ADDED_CLASS)) + (SN * 60 / 100));
+-- CREATE TABLE REPORT_CARD
+CREATE TABLE report_card(
+    report_card_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    classes_id INT NOT NULL,
+    term VARCHAR(50) NOT NULL,
+    total_average DECIMAL(5, 2),
+    rank_in_class INT,
+    remarks TEXT,
+    generate_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES student(student_id),
+    FOREIGN KEY (classes_id) REFERENCES classes(classes_id)
+);
+
+-- CREATE TABLE PARENT
+
+CREATE TABLE parent(
+    parent_id INT PRIMARY KEY AUTO_INCREMENT,
+    parent_name VARCHAR(100),
+    parent_email VARCHAR(100)
+);
+
+-- CREATE TABLE PARENT_STUDENT
+CREATE TABLE parent_student(
+    parent_student_id INT PRIMARY KEY AUTO_INCREMENT,
+    parent_id INT NOT NULL,
+    student_id INT NOT NULL,
+    FOREIGN KEY (parent_id) REFERENCES parent(parent_id),
+    FOREIGN KEY (student_id) REFERENCES student(student_id)
+);
+
+-- CREATE TABLE PARENT_QUESTIONS
+CREATE TABLE parent_questions(
+    parent_questions_id INT PRIMARY KEY AUTO_INCREMENT,
+    parent_id INT NOT NULL,
+    question TEXT NOT NULL,
+    student_id INT,
+    answer TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pending', 'answered') DEFAULT 'pending',
+    FOREIGN KEY (parent_id) REFERENCES parent(parent_id),
+    FOREIGN KEY (student_id) REFERENCES student(student_id)
+);
+
+CREATE TABLE exam_format (
+    exam_format_id INT PRIMARY KEY AUTO_INCREMENT,
+    school_id INT,
+    format_name ENUM('UNIVERSITY','SECONDARY'),
+    description TEXT,
+    Foreign Key (school_id) REFERENCES school(school_id)
+);
+
