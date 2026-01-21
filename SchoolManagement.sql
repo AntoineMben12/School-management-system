@@ -34,8 +34,114 @@ CREATE TABLE school_licences(
 -- CREATING ADMIN
 CREATE TABLE admin(
     admin_id INT PRIMARY KEY AUTO_INCREMENT,
+    school_id INT NOT NULL,
     admin_name VARCHAR(100) NOT NULL,
     admin_email VARCHAR(100) NOT NULL,
-    admin_password VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    admin_password_hash VARCHAR(255) NOT NULL,
+    role ENUM('principal', 'vice_principal', 'staff') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (school_id) REFERENCES school(school_id)
 );    
+
+-- CREATING TEACHER
+CREATE TABLE teacher(
+    teacher_id INT PRIMARY KEY AUTO_INCREMENT,
+    school_id INT NOT NULL,
+    matricule VARCHAR(100) NOT NULL,
+    teacher_name VARCHAR(100) NOT NULL,
+    teacher_email VARCHAR(100) NOT NULL,
+    teacher_passKey VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (school_id) REFERENCES school(school_id)
+);    
+
+-- CREATING TEACHER_OTP
+CREATE TABLE teacher_otp(
+    teacher_otp_id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    opt_code VARCHAR(100) NOT NULL,
+    expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES teacher(teacher_id)
+);
+
+-- CREATING CLASSES
+CREATE TABLE classes(
+    classes_id INT PRIMARY KEY AUTO_INCREMENT,
+    school_id INT NOT NULL,
+    class_name VARCHAR(100) NOT NULL,
+    academic_year VARCHAR(100) NOT NULL,
+    FOREIGN KEY (school_id) REFERENCES school(school_id)
+);
+
+-- CREATING SUBJECT
+CREATE TABLE subject(
+    subject_id INT PRIMARY KEY AUTO_INCREMENT,
+    subject_lenght INT NOT NULL,
+    subject_name VARCHAR(100) NOT NULL,
+);
+
+-- CREATING TEACHER_SUBJECT_CLASS
+CREATE TABLE teacher_subject_class(
+    teacher_subject_class_id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    classes_id INT NOT NULL,
+    FOREIGN KEY (teacher_id) REFERENCES teacher(teacher_id),
+    FOREIGN KEY (subject_id) REFERENCES subject(subject_id),
+    FOREIGN KEY (classes_id) REFERENCES classes(classes_id)
+);
+
+-- CREATING STUDENT
+CREATE TABLE student(
+    student_id INT PRIMARY KEY AUTO_INCREMENT,
+    school_id INT NOT NULL,
+    student_matricule VARCHAR(100) NOT NULL,
+    student_full_name VARCHAR(255) NOT NULL,
+    student_gender ENUM('F', 'M') NOT NULL,
+    classes_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (school_id) REFERENCES school(school_id),
+    FOREIGN KEY (classes_id) REFERENCES classes(classes_id)
+);
+
+-- CREATING COURSE_ATTENDANCE
+CREATE TABLE course_attendance (
+    course_attendance_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    classes_id INT NOT NULL,
+    attendance_date DATE NOT NULL,
+    attendance_status ENUM('present', 'absent', 'late') NOT NULL,
+    FOREIGN KEY (student_id) REFERENCES student(student_id),
+    FOREIGN KEY (subject_id) REFERENCES subject(subject_id),
+    FOREIGN KEY (classes_id) REFERENCES classes(classes_id)
+);
+
+-- CREATING TEACHER_ATTENDANCE
+CREATE TABLE teacher_attendance (
+    teacher_attendance_id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    attendance_date DATE NOT NULL,
+    attendance_status ENUM('present', 'absent', 'late') NOT NULL,
+    FOREIGN KEY (teacher_id) REFERENCES teacher(teacher_id)
+);
+
+-- CREATING MARKS
+CREATE TABLE marks (
+    mark_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    teacher_id INT NOT NULL,
+    ca DECIMAL(5, 2) NOT NULL,
+    mark_subtracted_class DECIMAL(5, 2) DEFAULT 0,
+    mark_added_class DECIMAL(5, 2) DEFAULT 0,
+    sn DECIMAL(5, 2),
+    final_mark DECIMAL(5, 2),
+    term VARCHAR(20),
+    FOREIGN KEY (student_id) REFERENCES student(student_id),
+    FOREIGN KEY (subject_id) REFERENCES subject(subject_id),
+    FOREIGN KEY (classes_id) REFERENCES classes(classes_id)
+);
+
+-- UNIVERSITY: FINAL_MARK = (((CA * 40 / 100) + (Mark_SUBTRACTED_CLASS +
+-- MARk_ADDED_CLASS)) + (SN * 60 / 100));
