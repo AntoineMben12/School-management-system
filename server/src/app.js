@@ -1,0 +1,43 @@
+import express from "express";
+import cors from "cors";
+import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import teacherRoutes from "./routes/teacherRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+import courseRoutes from "./routes/courseRoutes.js";
+import markRoutes from "./routes/markRoutes.js";
+import reportCardRoutes from "./routes/reportCardRoutes.js";
+import parentRoutes from "./routes/parentRoutes.js";
+import parentStudentRoutes from "./routes/parentStudentRoutes.js";
+import parentQuestionsRoutes from "./routes/parentQuestionsRoutes.js";
+import parentAnswersRoutes from "./routes/parentAnswersRoutes.js";
+import parentReportCardRoutes from "./routes/parentReportCardRoutes.js";
+import subjectRoutes from "./routes/subjectRoutes.js";
+import classRoutes from "./routes/classRoutes.js";
+import examRoutes from "./routes/examRoutes.js";
+import questionRoutes from "./routes/questionRoutes.js";
+import answerRoutes from "./routes/answerRoutes.js";
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+app.use("/auth", authRoutes);
+app.use("/admin", adminRoutes);
+app.use("/teacher", teacherRoutes);
+app.use("/student", studentRoutes);
+app.use("/course", courseRoutes);
+app.use("/mark", markRoutes);
+app.use("/reportCard", reportCardRoutes);
+app.use("/parent", parentRoutes);
+app.use("/parentStudent", parentStudentRoutes);
+app.use("/parentQuestions", parentQuestionsRoutes);
+app.use("/parentAnswers", parentAnswersRoutes);
+app.use("/parentReportCard", parentReportCardRoutes);
+app.use("/subject", subjectRoutes);
+app.use("/class", classRoutes);
+app.use("/exam", examRoutes);
+app.use("/question", questionRoutes);
+app.use("/answer", answerRoutes);
+
+export default app;
