@@ -1,6 +1,8 @@
-module.exports = (req, res, next) => {
+const superAdminMiddleware = (req, res, next) => {
     if (req.user.role !== 'superadmin') {
         return res.status(401).json({ message: 'Unauthorized' });
     }
     next();
 }
+
+export default superAdminMiddleware;

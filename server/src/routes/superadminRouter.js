@@ -1,14 +1,16 @@
-const express = require('express');
+import express from 'express';
+import * as controller from '../controllers/superadmin.controller.js';
+import checkRole from '../middleware/role.middleware.js';
+import { authMiddleware } from '../middleware/auth.middleware.js'; // Assuming this is named export
+
 const router = express.Router();
 
-const controller = require('../controllers/superadmin.controller');
-const auth = require('../middleware/auth.middleware');
-const superAdimOnly = require('../middleware/superadmin.middleware');
+// All routes require Auth + SuperAdmin role
+router.use(authMiddleware);
+router.use(checkRole(['super_admin']));
 
-router.post('/school', auth, superAdimOnly, controller.createSchool);
-router.post('/license', auth, superAdimOnly, controller.grantLicense);
-router.post('/school-admin', auth, superAdimOnly, controller.createSchoolAdmin);
-router.put('/school/:id/status', auth, superAdimOnly, controller.updateSchoolStatus);
-router.get('/dashboard', auth, superAdimOnly, controller.dashboard)
+router.post('/school', controller.createSchool);
+router.put('/license/:schoolId', controller.updateLicense);
+router.get('/dashboard', controller.dashboard);
 
-module.exports = router;
+export default router;

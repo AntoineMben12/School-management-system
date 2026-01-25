@@ -1,44 +1,46 @@
-const school = require('../models/school')
-const licenseService = require('../services/license.service')
-const admin = require('../models/admin')
+import SuperAdminService from '../services/superadmin.service.js';
 
-exports.createSchool = async (req, res) => {
-    const School = await school.create(req.body)
-    res.status(200).json({
-        success: true,
-        message: "School created successfully",
-        data: School
-    })
-}
+export const createSchool = async (req, res) => {
+    try {
+        const { school, license, admin } = req.body;
 
-exports.grantLicense = async (req, res) => {
-    const license = await licenseService.createLicense(req.body)
-    res.status(200).json({
-        success: true,
-        message: "License granted successfully",
-        data: license
-    })
-}
+        // Basic Validation
+        if (!school || !license || !admin) {
+            return res.status(400).json({ message: 'Missing required fields: school, license, or admin data.' });
+        }
 
-exports.createSchoolAdmin = async (req, res) => {
-    const admin = await admin.create(req.body)
-    res.status(200).json({
-        success: true,
-        message: "School admin created successfully",
-        data: admin
-    })
-}
+        const result = await SuperAdminService.createSchoolTenant({
+            schoolData: school,
+            licenseData: license,
+            adminData: admin
+        });
 
-exports.updateSchoolStatus = async (req, res) => {
-    const school = await school.findByIdAndUpdate(req.params.id, req.body, { new: true })
-    res.status(200).json({
-        success: true,
-        message: "School status updated successfully",
-        data: school
-    })
-}
+        res.status(201).json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message || 'Internal Server Error' });
+    }
+};
 
-exports.dashboard = async (req, res) => {
-    const stats = await school.getGlobalStats()
-    res.json(stats)
-}
+export const dashboard = async (req, res) => {
+    try {
+        const metrics = await SuperAdminService.getGlobalMetrics();
+        res.json(metrics);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error fetching dashboard metrics' });
+    }
+};
+
+export const updateLicense = async (req, res) => {
+    try {
+        const { schoolId } = req.params;
+        const { plan_name, end_date, status, max_students } = req.body;
+
+        await SuperAdminService.updateLicense(schoolId, { plan_name, end_date, status, max_students });
+        res.json({ message: 'License updated' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error updating license' });
+    }
+};
