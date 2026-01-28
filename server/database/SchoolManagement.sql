@@ -223,6 +223,7 @@ CREATE TABLE attendance (
     INDEX idx_attendance_date (offering_id, date)
 );
 
+desc invoices;
 -- ==========================================
 -- 7. FINANCE MODULE (NEW)
 -- ==========================================
@@ -290,3 +291,5 @@ CREATE TABLE ai_audit_logs (
     FOREIGN KEY (school_id) REFERENCES schools(school_id) ON DELETE CASCADE,
     INDEX idx_ai_usage (school_id, created_at)
 );
+
+SHOW TABLES;

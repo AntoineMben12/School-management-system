@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Superadmin Global Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7c3bed",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#0f0f12", // Updated to deeper charcoal per request
+                        "surface-dark": "#18181b", // Slightly lighter for cards
+                        "border-dark": "#27272a", // Subtle borders
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- Sidebar Navigation -->
+<aside class="w-72 flex-shrink-0 flex flex-col border-r border-border-dark bg-[#131118] transition-all duration-300">
+<div class="p-6 pb-2">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-white text-lg font-bold tracking-tight">EduManage</h1>
+<p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Superadmin</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-2">
+<p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Main Menu</p>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary border-l-4 border-primary transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-white transition-colors">domain</span>
+<span class="text-sm font-medium">Schools</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-white transition-colors">payments</span>
+<span class="text-sm font-medium">Finance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-white transition-colors">group</span>
+<span class="text-sm font-medium">Users</span>
+</a>
+<div class="my-4 border-t border-white/5"></div>
+<p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">System</p>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-white transition-colors">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-white transition-colors">support</span>
+<span class="text-sm font-medium">Support</span>
+</a>
+</nav>
+<div class="p-4 border-t border-white/5">
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-all" href="#">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-white/10" data-alt="Profile picture of the superadmin user" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCvjoFkuTmidRBdJUo3xodn3rJ9TQlNUL7LeY7BPE_3JmG-pwtCh0vHRHibx19-1J9s98vJs7aUaPbg9QtOSii9QQYvCPHRrdrv-D-GJWo4NZv8iyKi9S9CrA_bAOuDvTPQXlvfVLcoFZ-WquMs0X0EIaP5iCRHh_GqLEMg0tL5dk9m0VOb2kCj9MZNrNQDIdgriFt-61mN3WisAFF-nRhY083cYGqAXqxIiOumfRWty-ak4JqdZUcKV_p0GJQaTd4ZY3xzwvSyems");'></div>
+<div class="flex flex-col min-w-0">
+<p class="text-white text-sm font-medium truncate">Alexander P.</p>
+<p class="text-slate-500 text-xs truncate">alex@edumanage.com</p>
+</div>
+<span class="material-symbols-outlined text-slate-500 ml-auto">logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full overflow-hidden bg-background-dark relative">
+<!-- Sticky Header -->
+<header class="h-20 flex-shrink-0 flex items-center justify-between px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-md z-20">
+<div class="flex flex-col">
+<h2 class="text-2xl font-bold tracking-tight text-white">Global Overview</h2>
+<p class="text-slate-400 text-sm">Welcome back, here's what's happening today.</p>
+</div>
+<div class="flex items-center gap-6">
+<!-- Search Bar -->
+<div class="relative w-80">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+</div>
+<input class="block w-full rounded-full border-none bg-surface-dark py-2.5 pl-10 pr-3 text-sm placeholder:text-slate-500 text-white focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Search schools, licenses..." type="text"/>
+</div>
+<!-- Notifications -->
+<button class="relative p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-background-dark"></span>
+</button>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-8">
+<div class="max-w-[1400px] mx-auto space-y-8">
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Stat Card 1 -->
+<div class="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
+<div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary">school</span>
+</div>
+<p class="text-slate-400 text-sm font-medium mb-1">Total Schools</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-3xl font-bold text-white">1,240</h3>
+<span class="flex items-center text-emerald-400 text-xs font-medium bg-emerald-400/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px] mr-1">trending_up</span> +5%
+                                </span>
+</div>
+<div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
+<div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary">payments</span>
+</div>
+<p class="text-slate-400 text-sm font-medium mb-1">Monthly Revenue</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-3xl font-bold text-white">$420,500</h3>
+<span class="flex items-center text-emerald-400 text-xs font-medium bg-emerald-400/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px] mr-1">trending_up</span> +12%
+                                </span>
+</div>
+<div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[60%] rounded-full"></div>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
+<div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-primary">verified_user</span>
+</div>
+<p class="text-slate-400 text-sm font-medium mb-1">Active Licenses</p>
+<div class="flex items-baseline gap-3">
+<h3 class="text-3xl font-bold text-white">45,200</h3>
+<span class="flex items-center text-slate-400 text-xs font-medium bg-white/5 px-2 py-0.5 rounded-full">
+                                    98% utilization
+                                </span>
+</div>
+<div class="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[98%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Action Bar & Filters -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div class="flex gap-2">
+<div class="relative">
+<select class="appearance-none bg-surface-dark border border-white/10 text-white text-sm rounded-lg pl-3 pr-8 py-2 focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer">
+<option>All Statuses</option>
+<option>Active</option>
+<option>Expired</option>
+<option>Pending</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface-dark border border-white/10 text-white text-sm rounded-lg pl-3 pr-8 py-2 focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer">
+<option>Sort by Date</option>
+<option>Sort by Name</option>
+<option>Sort by Revenue</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<button class="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg shadow-primary/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Add New School</span>
+</button>
+</div>
+<!-- Data Table -->
+<div class="bg-surface-dark rounded-xl border border-white/5 overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-white/5 bg-white/[0.02]">
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider">School Name</th>
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Admin Contact</th>
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Plan / Tier</th>
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Students</th>
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-center">Status</th>
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Renewal</th>
+<th class="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Row 1 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">LH</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">Lincoln High School</span>
+<span class="text-xs text-slate-500">ID: #SCH-8832</span>
+</div>
+</div>
+</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="text-sm text-slate-200">Sarah Connor</span>
+<span class="text-xs text-slate-500">sarah@lincoln.edu</span>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/10">
+<span class="size-1.5 rounded-full bg-purple-400"></span> Enterprise
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-300 font-mono">2,450</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
+                                                Active
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-400">Oct 24, 2024</td>
+<td class="p-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">SA</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">St. Mary's Academy</span>
+<span class="text-xs text-slate-500">ID: #SCH-9921</span>
+</div>
+</div>
+</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="text-sm text-slate-200">Father John</span>
+<span class="text-xs text-slate-500">john@stmarys.org</span>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/10">
+<span class="size-1.5 rounded-full bg-blue-400"></span> Standard
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-300 font-mono">850</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/10">
+                                                Expired
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-red-400 font-medium">Yesterday</td>
+<td class="p-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">WT</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">West Tech Institute</span>
+<span class="text-xs text-slate-500">ID: #SCH-1029</span>
+</div>
+</div>
+</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="text-sm text-slate-200">Alan Turing</span>
+<span class="text-xs text-slate-500">alan@westtech.edu</span>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/10">
+<span class="size-1.5 rounded-full bg-purple-400"></span> Enterprise
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-300 font-mono">5,200</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
+                                                Active
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-400">Nov 15, 2024</td>
+<td class="p-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">RA</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">Riverdale Academy</span>
+<span class="text-xs text-slate-500">ID: #SCH-3341</span>
+</div>
+</div>
+</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="text-sm text-slate-200">Betty Cooper</span>
+<span class="text-xs text-slate-500">betty@riverdale.edu</span>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/10">
+<span class="size-1.5 rounded-full bg-blue-400"></span> Standard
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-300 font-mono">1,100</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/10">
+                                                Pending
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-400">--</td>
+<td class="p-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="group hover:bg-white/[0.02] transition-colors">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">GP</div>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white">Grand Park Primary</span>
+<span class="text-xs text-slate-500">ID: #SCH-5512</span>
+</div>
+</div>
+</td>
+<td class="p-4">
+<div class="flex flex-col">
+<span class="text-sm text-slate-200">Leslie Knope</span>
+<span class="text-xs text-slate-500">leslie@grandpark.gov</span>
+</div>
+</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/10">
+<span class="size-1.5 rounded-full bg-blue-400"></span> Standard
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-300 font-mono">420</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
+                                                Active
+                                            </span>
+</td>
+<td class="p-4 text-right text-sm text-slate-400">Dec 01, 2024</td>
+<td class="p-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
+<span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between p-4 border-t border-white/5 bg-white/[0.02]">
+<p class="text-xs text-slate-500">Showing <span class="text-white font-medium">1-5</span> of <span class="text-white font-medium">1,240</span> schools</p>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded hover:bg-white/10 text-slate-400 disabled:opacity-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-1 rounded hover:bg-white/10 text-slate-400 transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

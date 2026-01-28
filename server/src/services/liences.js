@@ -1,6 +1,6 @@
-const licenseModel = require('../models/licences')
+import * as licenseModel from '../models/licences.js'
 
-exports.createLicense = async (data) => {
+export const createLicense = async (data) => {
     if (new Date(data.endDate) <= new Date(data.startDate)) {
         throw new Error('End date must be greater than start date')
     }

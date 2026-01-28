@@ -1,7 +1,8 @@
-const db = require("../config/database.js");
+import db from "../config/database.js";
 
-exports.User = async (user) => {
-    const sql = 'INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, ?)';
+export const User = async (user) => {
+    const sql = 'INSERT INTO user (name, email, password, role, school_id) VALUES (?, ?, ?, ?, ?)';
 
-    return db.query(sql, [user.name, user.email, user.password, user.role]);
-} 
+    return db.query(sql, [user.name, user.email, user.password, user.role, user.school_id]);
+}
+

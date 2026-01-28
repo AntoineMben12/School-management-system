@@ -1,0 +1,21 @@
+import 'dotenv/config'
+import http from 'http'
+import app from './app.js'
+
+const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+
+server.listen(PORT, () => {
+    console.log('server running on post http://localhost:3000')
+})
+
+const shutdown = () => {
+    console.log('Shutting down server.')
+    server.close(() => {
+        console.log('server closed')
+        process.exit(0)
+    })
+}
+
+process.on('SIGINT', shutdown)
+process.on("SIGTERM", shutdown)

@@ -1,6 +1,6 @@
-const db = require('../config/database')
+import db from '../config/database.js'
 
-exports.create = async (license) => {
+export const create = async (license) => {
     const [result] = await db.execute('INSERT INTO license (school_id, type, status, start_date, end_date, max_student) VALUES (?, ?, ?, ?, ?, ?)', [
         license.school_id,
         license.type,
@@ -12,7 +12,7 @@ exports.create = async (license) => {
     return { id: result.insertId, ...license }
 }
 
-exports.isValid = async (school_id) => {
+export const isValid = async (school_id) => {
     const [rows] = await db.execute('SELECT * FROM license WHERE school_id = ? AND status = "ACTIVE" AND end_date >= NOW()', [school_id])
     return rows.length > 0
 }

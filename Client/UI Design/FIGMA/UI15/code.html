@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Communication Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7c3bed",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#171121",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for a clean Apple-like feel */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.3);
+            border-radius: 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.5);
+        }
+        /* Hide scrollbar for chips */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex h-screen w-full bg-background-light dark:bg-background-dark font-display overflow-hidden text-[#131118] dark:text-[#f3f3f3]">
+<!-- Sidebar Navigation -->
+<aside class="w-[380px] flex flex-col border-r border-gray-200 dark:border-gray-800 bg-background-light dark:bg-[#130e1c] shrink-0 h-full relative z-20">
+<!-- Header & Search -->
+<div class="px-5 pt-6 pb-2">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">school</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Messages</h1>
+</div>
+<button class="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 text-primary shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-transparent">
+<span class="material-symbols-outlined text-[20px]">edit_square</span>
+</button>
+</div>
+<!-- Search Component (Adapted) -->
+<label class="flex flex-col h-11 w-full group">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full bg-white dark:bg-[#1f1a2e] border border-gray-200 dark:border-gray-700 group-focus-within:border-primary/50 group-focus-within:ring-2 group-focus-within:ring-primary/10 transition-all shadow-sm">
+<div class="text-[#706189] flex items-center justify-center pl-4 pr-2">
+<span class="material-symbols-outlined text-[22px]">search</span>
+</div>
+<input class="flex w-full min-w-0 flex-1 bg-transparent text-[15px] focus:outline-0 text-[#131118] dark:text-white placeholder:text-[#706189] rounded-r-xl" placeholder="Search users or messages"/>
+</div>
+</label>
+</div>
+<!-- Filter Chips -->
+<div class="px-5 py-3 flex gap-2.5 overflow-x-auto no-scrollbar mask-gradient-right">
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#131118] dark:bg-primary text-white pl-4 pr-4 shadow-md transition-transform active:scale-95">
+<p class="text-xs font-medium leading-normal">All</p>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1f1a2e] border border-gray-200 dark:border-gray-700 pl-4 pr-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<p class="text-[#131118] dark:text-gray-300 text-xs font-medium leading-normal">Teachers</p>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1f1a2e] border border-gray-200 dark:border-gray-700 pl-4 pr-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<p class="text-[#131118] dark:text-gray-300 text-xs font-medium leading-normal">Parents</p>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-[#1f1a2e] border border-gray-200 dark:border-gray-700 pl-4 pr-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+<p class="text-[#131118] dark:text-gray-300 text-xs font-medium leading-normal">Admin</p>
+</button>
+</div>
+<!-- Conversation List -->
+<div class="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1 pb-4">
+<!-- Active Conversation -->
+<div class="group relative flex items-center gap-4 bg-white dark:bg-[#1f1a2e] px-4 py-4 rounded-xl shadow-sm border border-primary/20 cursor-pointer">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary rounded-r-full"></div>
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-12 w-12 border-2 border-white dark:border-[#2a2435] shadow-sm" data-alt="Portrait of Mrs. Smith" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBCz8H7GG88KPMTgYYfzw0NofigRBcmQQ6u8NvrT4ABX7fd9l9uR76QSKiHwsbEtfFFWAeHfrLxOGjL5-m-kTqa9C-OQoJwa_l5IMHAuWXUURR4NcJ7dRdFw0AJ5ZNl61GtwvBaHGqo-kKjInnTtwOeJw4g5fOd6JpanSSKFxgJcWHlya331yQ3ImnF0217PpC1q_0JVJQ0dZqBeC357sum418yiIX77MW_7jbLbjSbGGRG7CrHuWM0ZVmvqXxp4o8YegltAOCHdXU");'></div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 bg-green-500 border-2 border-white dark:border-[#1f1a2e] rounded-full"></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<p class="text-[#131118] dark:text-white text-[15px] font-semibold leading-none truncate">Mrs. Smith</p>
+<p class="text-primary text-xs font-medium">10:30 AM</p>
+</div>
+<div class="flex items-center gap-2 mb-0.5">
+<span class="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-primary text-[10px] font-bold uppercase tracking-wide">Teacher</span>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium line-clamp-1">Great! Please bring the signed consent form...</p>
+</div>
+</div>
+<!-- Inactive Conversation 1 -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/60 dark:hover:bg-white/5 cursor-pointer transition-colors group">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-12 w-12 opacity-90 group-hover:opacity-100 transition-opacity" data-alt="Portrait of Mr. Johnson" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBO9sB83-AdnaG9p84bDCwWgtJrrq8Dw4a18c3vaWxUu4wDmQgv7-uN2dLS5meCwTNQHjm0fhyIFKwHcVH6RcnR73h9P3kHRIDUrNg6LCdibG2TSMG5juhXALlFqRCkAowU061ZlWzpcZA9-_OASvdQMJrdIWUfw6ykZE0WDuF4yVzOWBnvBvQhGKqmTV3tYF5AKhSuigo_3OMlGbRBLc24mMcp-DtQwN6BYqKGhqbcnC2K2zeYThoxYTbnPUtpJduz1-B9H2qsldc");'></div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 bg-gray-300 border-2 border-background-light dark:border-[#130e1c] rounded-full"></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<p class="text-[#131118] dark:text-gray-200 text-[15px] font-medium leading-none truncate">Mr. Johnson</p>
+<p class="text-gray-400 text-xs font-medium">Yesterday</p>
+</div>
+<div class="flex items-center gap-2 mb-0.5">
+<span class="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wide">Principal</span>
+</div>
+<p class="text-gray-500 dark:text-gray-500 text-xs font-normal line-clamp-1 group-hover:text-gray-600 dark:group-hover:text-gray-400">Please review the quarterly report by Friday.</p>
+</div>
+</div>
+<!-- Inactive Conversation 2 -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/60 dark:hover:bg-white/5 cursor-pointer transition-colors group">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-12 w-12 opacity-90 group-hover:opacity-100 transition-opacity" data-alt="Portrait of Sarah Jenkins" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB8FpINMcyDKBVABubaTskGPP1UkVUIakMKZg-ETIEbhFi8uNlyPFoADtDHlw9TOHCXviRP2YPTFS_n___nevv6-2Sq-yALVdsxqHZzOJfFtEPghhsP-adqIduyHVcRAXxm-Xr2uVyKyh1arEW_gHyZImzg-HNDAcC1BdB1FIZ-d-j_BC0sv0_PZqlmDQ3B5Z0ai1p-lFP-r5kjstmU93YnBNhx-4HBqwQGyuSNi-Y_wto4IiQ2GhaODgS-NHMnuM8eekesQYpR-7o");'></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<p class="text-[#131118] dark:text-gray-200 text-[15px] font-medium leading-none truncate">Sarah Jenkins</p>
+<p class="text-gray-400 text-xs font-medium">Tue</p>
+</div>
+<div class="flex items-center gap-2 mb-0.5">
+<span class="px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wide">Parent</span>
+</div>
+<p class="text-gray-500 dark:text-gray-500 text-xs font-normal line-clamp-1 group-hover:text-gray-600 dark:group-hover:text-gray-400">Will Tommy be needing the kit for the trip?</p>
+</div>
+</div>
+<!-- Inactive Conversation 3 -->
+<div class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/60 dark:hover:bg-white/5 cursor-pointer transition-colors group">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-12 w-12 opacity-90 group-hover:opacity-100 transition-opacity" data-alt="Portrait of Tech Support" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD8Bh8IqLImg6C2U6xYvFCUtD4obFBDbOGVHrUa2psTAknnYSJik1z-zyLFNK4oGXGYI6aGyb-hVAzoMzSrZAdY_aXJlFoyeLNf-5mErvnHTOlzl9e3SiZaKS5-Vv5ZdmrGVPI3GvskaMfYSynq4xl9cqMkCAHZjC1fvrIL-PMcphoYkPb1By10XM8byi0FSYn7yBG61IZKGoUMnMHqfkJt-H53KwaBcxPdbq5_mV9sCDZmVdmufMfq4U86-6h-U5WXYdHiz4sV9Iw");'></div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 bg-green-500 border-2 border-background-light dark:border-[#130e1c] rounded-full"></div>
+</div>
+<div class="flex flex-col justify-center flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<p class="text-[#131118] dark:text-gray-200 text-[15px] font-medium leading-none truncate">IT Support</p>
+<p class="text-gray-400 text-xs font-medium">Mon</p>
+</div>
+<div class="flex items-center gap-2 mb-0.5">
+<span class="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-bold uppercase tracking-wide">Admin</span>
+</div>
+<p class="text-gray-500 dark:text-gray-500 text-xs font-normal line-clamp-1 group-hover:text-gray-600 dark:group-hover:text-gray-400">System maintenance scheduled for 10pm.</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Chat Window -->
+<main class="flex-1 flex flex-col bg-white dark:bg-[#171121] h-full overflow-hidden relative shadow-2xl">
+<!-- Chat Header -->
+<header class="h-20 shrink-0 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-8 bg-white/90 dark:bg-[#171121]/90 backdrop-blur-md sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<div class="relative">
+<div class="w-12 h-12 rounded-full bg-cover bg-center shadow-sm" data-alt="Portrait of Mrs. Smith" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCUAGEt-AS4Gn1JPBRNpXlr0SrD5o3-Liqe_Qx2s9j2ARxX-K59fgxTgHnrPE0tl6rHrt9dhT0oBPfBKJ94MaO6KESKSQxRwNT5mVTNKpHv1M-IF-4dt452VIFUaxZERsA_GGicq3J1_Q9NXRWxD1hrUETDumxJBzc0fq6_c1CNI8Z_GlbwZZvX-YZAf4Bj-IAnhmrHdMSFRcxsMifm-093rc-pSK-s_kDELeoPyPeIlr97-zMSjXRWUY_3MDpLkA_nPYsybANIbXc')"></div>
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#171121] rounded-full ring-1 ring-black/5"></span>
+</div>
+<div class="flex flex-col justify-center">
+<h2 class="text-[17px] font-bold text-[#131118] dark:text-white leading-tight">Mrs. Smith</h2>
+<div class="flex items-center gap-1.5">
+<span class="text-xs text-primary font-semibold">Class Teacher</span>
+<span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+<span class="text-xs text-gray-500 dark:text-gray-400">Online</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center text-primary/80 hover:text-primary hover:bg-primary/5 rounded-full transition-all">
+<span class="material-symbols-outlined text-[24px]">call</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-primary/80 hover:text-primary hover:bg-primary/5 rounded-full transition-all">
+<span class="material-symbols-outlined text-[24px]">videocam</span>
+</button>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+<button class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full transition-all">
+<span class="material-symbols-outlined text-[24px]">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6 bg-white dark:bg-[#171121]">
+<!-- Timestamp Separator -->
+<div class="flex justify-center py-4">
+<span class="text-[11px] font-medium text-gray-400 bg-gray-50 dark:bg-white/5 px-4 py-1.5 rounded-full uppercase tracking-wider border border-gray-100 dark:border-transparent">Today</span>
+</div>
+<!-- Message Received (Mrs. Smith) -->
+<div class="flex gap-4 max-w-[75%] group">
+<div class="w-8 h-8 rounded-full bg-cover bg-center flex-shrink-0 mt-auto opacity-0 group-hover:opacity-100 transition-opacity" data-alt="Small portrait of Mrs. Smith" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAl7fCJREYV5VKyiKNsmeI7YFVVaxkTp7NCr3MR8BFFlv4nWBI5V7uXbBx8I1mG4sjCTCpqWrjQd--SB-5Eh6v2JihYHZbyrx_iIYCY-IlDFyHZSpmyAaw_aLLEXpotqIH9nuZy5QnKFRfTpBhxcEuqL6b1QKKh86-QXHfdk_5INWnNGVUE0AXnzJJdKR5kMq7uBHY2Ww_rkVxHVBHsP5iYGMZNqmmzChO0dyya1gel8dfQ1UC5ARasrjS4ZqYHyTSiS35VbBaDY0c')"></div>
+<div class="flex flex-col gap-1.5 items-start">
+<div class="bg-[#f2f0f4] dark:bg-[#2a2435] px-5 py-3.5 rounded-2xl rounded-bl-none text-[15px] text-[#131118] dark:text-gray-100 leading-relaxed shadow-sm max-w-full break-words">
+                        Hello Mr. Doe, just a reminder about the parent-teacher meeting tomorrow regarding the upcoming science fair.
+                    </div>
+<span class="text-[11px] text-gray-400 ml-1">10:23 AM</span>
+</div>
+</div>
+<!-- Message Sent (Me) -->
+<div class="flex gap-4 max-w-[75%] ml-auto justify-end group">
+<div class="flex flex-col gap-1.5 items-end">
+<div class="bg-primary text-white px-5 py-3.5 rounded-2xl rounded-br-none text-[15px] leading-relaxed shadow-md shadow-primary/10 max-w-full break-words">
+                        Hi Mrs. Smith, thanks for the reminder. I will be there at 2 PM.
+                    </div>
+<div class="flex items-center gap-1 mr-1">
+<span class="text-[11px] text-gray-400">10:25 AM</span>
+<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
+</div>
+</div>
+</div>
+<!-- Message Received (Mrs. Smith + Attachment) -->
+<div class="flex gap-4 max-w-[75%] group">
+<div class="w-8 h-8 rounded-full bg-cover bg-center flex-shrink-0 mt-auto opacity-100" data-alt="Small portrait of Mrs. Smith" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuArV32t_JhWCRkEoc54SyTQsTavEOQVLGYSQoGV7Tm_x2tWC1pJJvrW22dZ_Ds9Of7WxekhH4xUkk3O1WtKbVAVRfO43-7m08SrGaHtLaGe6qosU0hhRcqEPHiTzj_t05rw5WnLbNe_HWY7yVi8U7vAZAF06ShixDwnA1JeZgXmZlRNrFZFOY3L39mV3rW8uJy-CPSDTF2Jajhz6h6gmAv8WU0xC0zJ_ORw7Q1X2N8AokQymB4MDiWKHKp0gHYmRACzruWQLOhUcKo')"></div>
+<div class="flex flex-col gap-1.5 items-start">
+<div class="bg-[#f2f0f4] dark:bg-[#2a2435] px-5 py-3.5 rounded-2xl rounded-bl-none text-[15px] text-[#131118] dark:text-gray-100 leading-relaxed shadow-sm max-w-full break-words">
+                        Great! Please bring the signed consent form if you haven't uploaded it yet.
+                    </div>
+<!-- File Attachment Card -->
+<div class="bg-white dark:bg-[#231e2e] border border-gray-200 dark:border-gray-700 p-3 rounded-xl rounded-tl-none flex items-center gap-3 w-[260px] shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center text-red-500 shrink-0">
+<span class="material-symbols-outlined text-[24px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">Consent_Form_v2.pdf</span>
+<span class="text-[10px] text-gray-500">1.2 MB • PDF</span>
+</div>
+<button class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-primary rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</button>
+</div>
+<span class="text-[11px] text-gray-400 ml-1">10:30 AM</span>
+</div>
+</div>
+<!-- Padding for scroll -->
+<div class="h-2"></div>
+</div>
+<!-- Input Area -->
+<div class="p-6 bg-white dark:bg-[#171121] relative z-20">
+<div class="flex items-end gap-3 bg-gray-50 dark:bg-[#1f1a2e] p-2 rounded-3xl border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all shadow-sm">
+<button class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-white dark:hover:bg-white/5 rounded-full transition-all flex-shrink-0 ml-1">
+<span class="material-symbols-outlined text-[24px]">add_circle</span>
+</button>
+<div class="flex-1 py-2.5">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-[15px] p-0 max-h-32 resize-none text-[#131118] dark:text-white placeholder:text-gray-400 leading-relaxed" placeholder="Type a message to Mrs. Smith..." rows="1"></textarea>
+</div>
+<button class="w-10 h-10 bg-primary text-white rounded-full hover:bg-primary/90 transition-all shadow-md hover:shadow-lg flex items-center justify-center flex-shrink-0 mr-1 mb-0.5 active:scale-95">
+<span class="material-symbols-outlined text-[20px] ml-0.5">send</span>
+</button>
+</div>
+<div class="text-center mt-3 opacity-0 hover:opacity-100 transition-opacity duration-300">
+<p class="text-[10px] text-gray-300 dark:text-gray-600">Press Enter to send</p>
+</div>
+</div>
+</main>
+</body></html>
