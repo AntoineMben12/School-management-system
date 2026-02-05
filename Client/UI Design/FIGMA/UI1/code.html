@@ -1,124 +1,235 @@
-<!DOCTYPE html>
+<!doctype html>
 
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Minimalist Login Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-            extend: {
-                colors: {
-                "primary": "#7c3bed",
-                "background-light": "#f7f6f8",
-                "background-dark": "#171121",
-                },
-                fontFamily: {
-                "display": ["Inter", "sans-serif"]
-                },
-                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
-                boxShadow: {
-                    "apple": "0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 10px 20px -5px rgba(0, 0, 0, 0.04)",
-                    "apple-sm": "0 2px 4px rgba(0,0,0,0.05)",
-                }
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Minimalist Login Portal</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#7c3bed",
+              "background-light": "#f7f6f8",
+              "background-dark": "#171121",
             },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
             },
-        }
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              "2xl": "1rem",
+              full: "9999px",
+            },
+            boxShadow: {
+              apple:
+                "0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 10px 20px -5px rgba(0, 0, 0, 0.04)",
+              "apple-sm": "0 2px 4px rgba(0,0,0,0.05)",
+            },
+          },
+        },
+      };
     </script>
-</head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 antialiased min-h-screen w-full flex flex-col overflow-x-hidden">
-<div class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-<!-- Main Card -->
-<div class="w-full max-w-[480px] bg-white dark:bg-[#1e1e24] rounded-2xl shadow-apple p-8 md:p-12 border border-white/50 dark:border-white/5 relative flex flex-col justify-center">
-<!-- Header Section -->
-<div class="flex flex-col items-center justify-center mb-10 text-center">
-<div class="w-14 h-14 bg-gradient-to-tr from-primary/20 to-primary/5 rounded-xl flex items-center justify-center mb-5 shadow-sm text-primary">
-<span class="material-symbols-outlined text-[32px]">school</span>
-</div>
-<h1 class="text-3xl font-bold tracking-tight text-[#131118] dark:text-white mb-2">Welcome Back</h1>
-<p class="text-[#706189] dark:text-slate-400 text-sm font-normal">Sign in to AcademyOS to continue</p>
-</div>
-<!-- Role Selector -->
-<div class="mb-8">
-<div class="flex h-12 w-full items-center justify-center rounded-xl bg-[#f2f0f4] dark:bg-slate-800/50 p-1.5">
-<label class="flex-1 h-full relative cursor-pointer group">
-<input class="peer sr-only" name="role" type="radio" value="Superadmin"/>
-<div class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold">
-                            Superadmin
-                        </div>
-</label>
-<label class="flex-1 h-full relative cursor-pointer group">
-<input class="peer sr-only" name="role" type="radio" value="Admin"/>
-<div class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold">
-                            Admin
-                        </div>
-</label>
-<label class="flex-1 h-full relative cursor-pointer group">
-<input checked="" class="peer sr-only" name="role" type="radio" value="Teacher"/>
-<div class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold">
-                            Teacher
-                        </div>
-</label>
-<label class="flex-1 h-full relative cursor-pointer group">
-<input class="peer sr-only" name="role" type="radio" value="Student"/>
-<div class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold">
-                            Student
-                        </div>
-</label>
-</div>
-</div>
-<!-- Login Form -->
-<form class="flex flex-col gap-6" onsubmit="event.preventDefault();">
-<!-- Email Field -->
-<div class="flex flex-col gap-2">
-<label class="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal ml-1" for="email">Email Address</label>
-<div class="relative group">
-<input class="form-input block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-base text-[#131118] dark:text-white placeholder-[#706189] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600" id="email" placeholder="user@school.edu" type="email"/>
-<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[#706189]">
-<span class="material-symbols-outlined text-[20px]">mail</span>
-</div>
-</div>
-</div>
-<!-- Password Field -->
-<div class="flex flex-col gap-2">
-<div class="flex justify-between items-center ml-1">
-<label class="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal" for="password">Password</label>
-</div>
-<div class="relative group">
-<input class="form-input block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-base text-[#131118] dark:text-white placeholder-[#706189] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600" id="password" placeholder="••••••••" type="password"/>
-<button class="absolute inset-y-0 right-0 flex items-center pr-3 text-[#706189] hover:text-[#131118] dark:hover:text-white transition-colors cursor-pointer" type="button">
-<span class="material-symbols-outlined text-[20px]">visibility</span>
-</button>
-</div>
-</div>
-<!-- Utilities Row -->
-<div class="flex items-center justify-between px-1">
-<label class="inline-flex items-center cursor-pointer">
-<input class="form-checkbox h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20 transition duration-150 ease-in-out" type="checkbox"/>
-<span class="ml-2 text-sm text-[#706189] dark:text-slate-400">Remember me</span>
-</label>
-<a class="text-sm font-medium text-primary hover:text-primary/80 transition-colors" href="#">Forgot Password?</a>
-</div>
-<!-- Primary Action -->
-<button class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-primary/20 text-base mt-2" type="submit">
-                    Log In
-                </button>
-</form>
-<!-- Footer Links -->
-<div class="mt-10 text-center border-t border-slate-100 dark:border-slate-800 pt-6">
-<p class="text-sm text-[#706189] dark:text-slate-500">
-                    Need help logging in? <a class="font-medium text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">Visit Help Center</a>
-</p>
-</div>
-</div>
-<!-- Bottom Branding/Copyright -->
-<div class="fixed bottom-6 text-center w-full pointer-events-none hidden md:block">
-<p class="text-xs text-slate-400 dark:text-slate-600">© 2024 AcademyOS. All rights reserved.</p>
-</div>
-</div>
-</body></html>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 antialiased min-h-screen w-full flex flex-col overflow-x-hidden"
+  >
+    <div class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <!-- Main Card -->
+      <div
+        class="w-full max-w-[480px] bg-white dark:bg-[#1e1e24] rounded-2xl shadow-apple p-8 md:p-12 border border-white/50 dark:border-white/5 relative flex flex-col justify-center"
+      >
+        <!-- Header Section -->
+        <div
+          class="flex flex-col items-center justify-center mb-10 text-center"
+        >
+          <div
+            class="w-14 h-14 bg-gradient-to-tr from-primary/20 to-primary/5 rounded-xl flex items-center justify-center mb-5 shadow-sm text-primary"
+          >
+            <span class="material-symbols-outlined text-[32px]">school</span>
+          </div>
+          <h1
+            class="text-3xl font-bold tracking-tight text-[#131118] dark:text-white mb-2"
+          >
+            Welcome Back
+          </h1>
+          <p class="text-[#706189] dark:text-slate-400 text-sm font-normal">
+            Sign in to AcademyOS to continue
+          </p>
+        </div>
+        <!-- Role Selector -->
+        <div class="mb-8">
+          <div
+            class="flex h-12 w-full items-center justify-center rounded-xl bg-[#f2f0f4] dark:bg-slate-800/50 p-1.5"
+          >
+            <label class="flex-1 h-full relative cursor-pointer group">
+              <input
+                class="peer sr-only"
+                name="role"
+                type="radio"
+                value="Superadmin"
+              />
+              <div
+                class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold"
+              >
+                Superadmin
+              </div>
+            </label>
+            <label class="flex-1 h-full relative cursor-pointer group">
+              <input
+                class="peer sr-only"
+                name="role"
+                type="radio"
+                value="Admin"
+              />
+              <div
+                class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold"
+              >
+                Admin
+              </div>
+            </label>
+            <label class="flex-1 h-full relative cursor-pointer group">
+              <input
+                checked=""
+                class="peer sr-only"
+                name="role"
+                type="radio"
+                value="Teacher"
+              />
+              <div
+                class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold"
+              >
+                Teacher
+              </div>
+            </label>
+            <label class="flex-1 h-full relative cursor-pointer group">
+              <input
+                class="peer sr-only"
+                name="role"
+                type="radio"
+                value="Student"
+              />
+              <div
+                class="w-full h-full flex items-center justify-center rounded-lg text-xs sm:text-sm font-medium text-[#706189] dark:text-slate-400 transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-apple-sm peer-checked:font-semibold"
+              >
+                Student
+              </div>
+            </label>
+          </div>
+        </div>
+        <!-- Login Form -->
+        <form class="flex flex-col gap-6" onsubmit="event.preventDefault()">
+          <!-- Email Field -->
+          <div class="flex flex-col gap-2">
+            <label
+              class="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal ml-1"
+              for="email"
+              >Email Address</label
+            >
+            <div class="relative group">
+              <input
+                class="form-input block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-base text-[#131118] dark:text-white placeholder-[#706189] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600"
+                id="email"
+                placeholder="user@school.edu"
+                type="email"
+              />
+              <div
+                class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[#706189]"
+              >
+                <span class="material-symbols-outlined text-[20px]">mail</span>
+              </div>
+            </div>
+          </div>
+          <!-- Password Field -->
+          <div class="flex flex-col gap-2">
+            <div class="flex justify-between items-center ml-1">
+              <label
+                class="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal"
+                for="password"
+                >Password</label
+              >
+            </div>
+            <div class="relative group">
+              <input
+                class="form-input block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-base text-[#131118] dark:text-white placeholder-[#706189] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600"
+                id="password"
+                placeholder="••••••••"
+                type="password"
+              />
+              <button
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-[#706189] hover:text-[#131118] dark:hover:text-white transition-colors cursor-pointer"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[20px]"
+                  >visibility</span
+                >
+              </button>
+            </div>
+          </div>
+          <!-- Utilities Row -->
+          <div class="flex items-center justify-between px-1">
+            <label class="inline-flex items-center cursor-pointer">
+              <input
+                class="form-checkbox h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20 transition duration-150 ease-in-out"
+                type="checkbox"
+              />
+              <span class="ml-2 text-sm text-[#706189] dark:text-slate-400"
+                >Remember me</span
+              >
+            </label>
+            <a
+              class="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+              href="#"
+              >Forgot Password?</a
+            >
+          </div>
+          <!-- Primary Action -->
+          <button
+            class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98] text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-primary/20 text-base mt-2"
+            type="submit"
+          >
+            Log In
+          </button>
+        </form>
+        <!-- Footer Links -->
+        <div
+          class="mt-10 text-center border-t border-slate-100 dark:border-slate-800 pt-6"
+        >
+          <p class="text-sm text-[#706189] dark:text-slate-500">
+            Need help logging in?
+            <a
+              class="font-medium text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              href="#"
+              >Visit Help Center</a
+            >
+          </p>
+        </div>
+      </div>
+      <!-- Bottom Branding/Copyright -->
+      <div
+        class="fixed bottom-6 text-center w-full pointer-events-none hidden md:block"
+      >
+        <p class="text-xs text-slate-400 dark:text-slate-600">
+          © 2024 AcademyOS. All rights reserved.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

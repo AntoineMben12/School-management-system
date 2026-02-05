@@ -18,10 +18,39 @@ import examRoutes from "./routes/examRoutes.js";
 import questionRoutes from "./routes/questionRoutes.js";
 import answerRoutes from "./routes/answerRoutes.js";
 
-const app = express();
-app.use(express.json());
-app.use(cors());
+// Request logging middleware
+const requestLogger = (req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+    });
+    next();
+};
 
+const app = express();
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(requestLogger);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
+// API Routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/teacher", teacherRoutes);
@@ -39,5 +68,38 @@ app.use("/class", classRoutes);
 app.use("/exam", examRoutes);
 app.use("/question", questionRoutes);
 app.use("/answer", answerRoutes);
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ 
+        error: 'Not Found',
+        message: `Route ${req.method} ${req.path} not found`,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Global error handler middleware (MUST be last)
+app.use((error, req, res, next) => {
+    console.error('Error Details:', {
+        message: error.message,
+        status: error.status || 500,
+        stack: error.stack,
+        path: req.path,
+        method: req.method,
+        timestamp: new Date().toISOString()
+    });
+
+    const statusCode = error.status || error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+
+    res.status(statusCode).json({
+        error: {
+            message,
+            status: statusCode,
+            timestamp: new Date().toISOString(),
+            path: req.path
+        }
+    });
+});
 
 export default app;

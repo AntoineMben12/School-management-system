@@ -1,0 +1,117 @@
+{
+  "clientName": "Thunder Client",
+  "dateExported": "2026-02-04",
+  "version": "1.1",
+  "folders": [
+    {
+      "name": "Health & System",
+      "requests": [
+        {
+          "name": "Health Check",
+          "method": "GET",
+          "url": "http://localhost:5000/health",
+          "description": "Verify API is running",
+          "headers": [],
+          "body": null
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "requests": [
+        {
+          "name": "Register User",
+          "method": "POST",
+          "url": "http://localhost:5000/auth/register",
+          "description": "Create a new user account",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "username": "john_doe",
+            "email": "john@test.com",
+            "password": "Password123",
+            "role": "school_admin",
+            "school_id": 1,
+            "profile": {
+              "first_name": "John",
+              "last_name": "Doe"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "method": "POST",
+          "url": "http://localhost:5000/auth/login",
+          "description": "Login with email and password",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "email": "john@test.com",
+            "password": "Password123",
+            "school_id": 1
+          }
+        },
+        {
+          "name": "Change Password",
+          "method": "POST",
+          "url": "http://localhost:5000/auth/change-password",
+          "description": "Change user password (requires token)",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": {
+            "oldPassword": "Password123",
+            "newPassword": "NewPassword456"
+          }
+        },
+        {
+          "name": "Request Password Reset",
+          "method": "POST",
+          "url": "http://localhost:5000/auth/forgot-password",
+          "description": "Request a password reset token",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "email": "john@test.com",
+            "school_id": 1
+          }
+        },
+        {
+          "name": "Reset Password",
+          "method": "POST",
+          "url": "http://localhost:5000/auth/reset-password",
+          "description": "Reset password using token",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "resetToken": "TOKEN_FROM_FORGOT_PASSWORD",
+            "newPassword": "FinalPassword789"
+          }
+        }
+      ]
+    }
+  ]
+}

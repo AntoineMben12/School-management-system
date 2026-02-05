@@ -1,179 +1,195 @@
 import db from '../config/database.js';
 
 /**
- * School License Model
- * Handles database operations for school_licenses table
+ * School License Model - Comprehensive CRUD operations
+ * Manages school subscription plans and feature access
  */
 
-/**
- * Create a new school license
- * @param {Object} licenseData - License data
- * @returns {Promise} Database result
- */
 export const create = async (licenseData) => {
     const { school_id, plan_name, start_date, end_date, status, max_students, features } = licenseData;
     const featuresJson = typeof features === 'string' ? features : JSON.stringify(features || {});
 
-    const [result] = await db.execute(
-        'INSERT INTO school_licenses (school_id, plan_name, start_date, end_date, status, max_students, features) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [school_id, plan_name, start_date, end_date, status || 'active', max_students || 500, featuresJson]
-    );
-    return { license_id: result.insertId, ...licenseData };
-};
-
-/**
- * Find licenses by school
- * @param {number} school_id - School ID
- * @returns {Promise} Array of licenses
- */
-export const findBySchool = async (school_id) => {
-    const [rows] = await db.query(
-        'SELECT * FROM school_licenses WHERE school_id = ? ORDER BY created_at DESC',
-        [school_id]
-    );
-
-    // Parse features JSON for each row
-    return rows.map(row => ({
-        ...row,
-        features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
-    }));
-};
-
-/**
- * Find license by ID
- * @param {number} license_id - License ID
- * @returns {Promise} License data
- */
-export const findById = async (license_id) => {
-    const [rows] = await db.query(
-        'SELECT * FROM school_licenses WHERE license_id = ?',
-        [license_id]
-    );
-
-    if (rows.length === 0) return null;
-
-    const row = rows[0];
-    return {
-        ...row,
-        features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
-    };
-};
-
-/**
- * Get active license for a school
- * @param {number} school_id - School ID
- * @returns {Promise} Active license or null
- */
-export const getActiveLicense = async (school_id) => {
-    const [rows] = await db.query(
-        `SELECT * FROM school_licenses 
-         WHERE school_id = ? 
-         AND status = 'active' 
-         AND end_date >= CURDATE()
-         ORDER BY end_date DESC
-         LIMIT 1`,
-        [school_id]
-    );
-
-    if (rows.length === 0) return null;
-
-    const row = rows[0];
-    return {
-        ...row,
-        features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
-    };
-};
-
-/**
- * Update license status
- * @param {number} license_id - License ID
- * @param {string} status - New status (active, expired, suspended)
- * @returns {Promise} Database result
- */
-export const updateStatus = async (license_id, status) => {
-    const [result] = await db.execute(
-        'UPDATE school_licenses SET status = ? WHERE license_id = ?',
-        [status, license_id]
-    );
-    return result;
-};
-
-/**
- * Update license details
- * @param {number} license_id - License ID
- * @param {Object} updateData - Data to update
- * @returns {Promise} Database result
- */
-export const update = async (license_id, updateData) => {
-    const { plan_name, end_date, status, max_students, features } = updateData;
-    const featuresJson = features ? (typeof features === 'string' ? features : JSON.stringify(features)) : null;
-
-    const updates = [];
-    const values = [];
-
-    if (plan_name) {
-        updates.push('plan_name = ?');
-        values.push(plan_name);
+    try {
+        const [result] = await db.execute(
+            `INSERT INTO school_licenses (school_id, plan_name, start_date, end_date, status, max_students, features, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [school_id, plan_name, start_date, end_date, status || 'ACTIVE', max_students || 500, featuresJson]
+        );
+        return { id: result.insertId, ...licenseData };
+    } catch (error) {
+        throw new Error(`Failed to create school license: ${error.message}`);
     }
-    if (end_date) {
-        updates.push('end_date = ?');
-        values.push(end_date);
+};
+
+export const findById = async (licenseId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT sl.*, s.name as school_name
+             FROM school_licenses sl
+             LEFT JOIN schools s ON sl.school_id = s.id
+             WHERE sl.id = ?`,
+            [licenseId]
+        );
+
+        if (!rows[0]) return null;
+
+        const row = rows[0];
+        return {
+            ...row,
+            features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
+        };
+    } catch (error) {
+        throw new Error(`Failed to find school license: ${error.message}`);
     }
-    if (status) {
-        updates.push('status = ?');
-        values.push(status);
+};
+
+export const findBySchool = async (schoolId) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT * FROM school_licenses WHERE school_id = ? ORDER BY start_date DESC',
+            [schoolId]
+        );
+
+        return rows.map(row => ({
+            ...row,
+            features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
+        }));
+    } catch (error) {
+        throw new Error(`Failed to find school licenses: ${error.message}`);
     }
-    if (max_students) {
-        updates.push('max_students = ?');
-        values.push(max_students);
+};
+
+export const getActiveLicense = async (schoolId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT * FROM school_licenses 
+             WHERE school_id = ? 
+             AND status = 'ACTIVE' 
+             AND end_date >= CURDATE()
+             ORDER BY end_date DESC
+             LIMIT 1`,
+            [schoolId]
+        );
+
+        if (!rows[0]) return null;
+
+        const row = rows[0];
+        return {
+            ...row,
+            features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
+        };
+    } catch (error) {
+        throw new Error(`Failed to get active license: ${error.message}`);
     }
-    if (featuresJson) {
-        updates.push('features = ?');
-        values.push(featuresJson);
+};
+
+export const update = async (licenseId, updates) => {
+    const allowedFields = ['plan_name', 'end_date', 'status', 'max_students', 'features'];
+    const updateFields = [];
+    const updateValues = [];
+
+    for (const [key, value] of Object.entries(updates)) {
+        if (allowedFields.includes(key)) {
+            if (key === 'features') {
+                const featuresJson = typeof value === 'string' ? value : JSON.stringify(value);
+                updateFields.push(`${key} = ?`);
+                updateValues.push(featuresJson);
+            } else {
+                updateFields.push(`${key} = ?`);
+                updateValues.push(value);
+            }
+        }
     }
 
-    if (updates.length === 0) {
-        return { affectedRows: 0 };
+    if (updateFields.length === 0) return { affectedRows: 0 };
+
+    updateFields.push('updated_at = NOW()');
+    updateValues.push(licenseId);
+
+    try {
+        const [result] = await db.execute(
+            `UPDATE school_licenses SET ${updateFields.join(', ')} WHERE id = ?`,
+            updateValues
+        );
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to update school license: ${error.message}`);
     }
-
-    values.push(license_id);
-    const [result] = await db.execute(
-        `UPDATE school_licenses SET ${updates.join(', ')} WHERE license_id = ?`,
-        values
-    );
-    return result;
 };
 
-/**
- * Check if license is valid (active and not expired)
- * @param {number} school_id - School ID
- * @returns {Promise} Boolean indicating validity
- */
-export const checkValidity = async (school_id) => {
-    const [rows] = await db.query(
-        `SELECT COUNT(*) as count FROM school_licenses 
-         WHERE school_id = ? 
-         AND status = 'active' 
-         AND end_date >= CURDATE()`,
-        [school_id]
-    );
-    return rows[0].count > 0;
+export const deleteLicense = async (licenseId) => {
+    try {
+        const [result] = await db.execute(
+            'DELETE FROM school_licenses WHERE id = ?',
+            [licenseId]
+        );
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to delete school license: ${error.message}`);
+    }
 };
 
-/**
- * Get expired licenses
- * @returns {Promise} Array of expired licenses
- */
+export const checkValidity = async (schoolId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT COUNT(*) as count FROM school_licenses 
+             WHERE school_id = ? 
+             AND status = 'ACTIVE' 
+             AND end_date >= CURDATE()`,
+            [schoolId]
+        );
+        return rows[0]?.count > 0;
+    } catch (error) {
+        throw new Error(`Failed to validate license: ${error.message}`);
+    }
+};
+
 export const getExpiredLicenses = async () => {
-    const [rows] = await db.query(
-        `SELECT * FROM school_licenses 
-         WHERE status = 'active' 
-         AND end_date < CURDATE()
-         ORDER BY end_date DESC`
-    );
+    try {
+        const [rows] = await db.query(
+            `SELECT sl.*, s.name as school_name FROM school_licenses sl
+             LEFT JOIN schools s ON sl.school_id = s.id
+             WHERE status = 'ACTIVE' 
+             AND end_date < CURDATE()
+             ORDER BY end_date DESC`
+        );
 
-    return rows.map(row => ({
-        ...row,
-        features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
-    }));
+        return rows.map(row => ({
+            ...row,
+            features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
+        }));
+    } catch (error) {
+        throw new Error(`Failed to get expired licenses: ${error.message}`);
+    }
+};
+
+export const getExpiringLicenses = async (daysFromNow = 30) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT sl.*, s.name as school_name FROM school_licenses sl
+             LEFT JOIN schools s ON sl.school_id = s.id
+             WHERE status = 'ACTIVE' AND end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
+             ORDER BY end_date ASC`,
+            [daysFromNow]
+        );
+
+        return rows.map(row => ({
+            ...row,
+            features: typeof row.features === 'string' ? JSON.parse(row.features) : row.features
+        }));
+    } catch (error) {
+        throw new Error(`Failed to get expiring licenses: ${error.message}`);
+    }
+};
+
+export default {
+    create,
+    findById,
+    findBySchool,
+    getActiveLicense,
+    update,
+    deleteLicense,
+    checkValidity,
+    getExpiredLicenses,
+    getExpiringLicenses
 };

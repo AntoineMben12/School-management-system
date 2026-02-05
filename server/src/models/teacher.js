@@ -1,155 +1,182 @@
 import db from '../config/database.js';
 
 /**
- * Teacher Model
- * Handles database operations for teachers table
+ * Teacher Model - Comprehensive CRUD operations
+ * Handles all teacher profile management and course assignments
  */
 
-/**
- * Create a new teacher profile
- * @param {Object} teacherData - Teacher data
- * @returns {Promise} Database result
- */
 export const create = async (teacherData) => {
-    const { user_id, school_id, first_name, last_name, qualification, phone } = teacherData;
-    const [result] = await db.execute(
-        'INSERT INTO teachers (user_id, school_id, first_name, last_name, qualification, phone) VALUES (?, ?, ?, ?, ?, ?)',
-        [user_id, school_id, first_name, last_name, qualification || null, phone || null]
-    );
-    return { teacher_id: result.insertId, ...teacherData };
+    const { user_id, school_id, department, specialization, phone, address, qualification } = teacherData;
+    try {
+        const [result] = await db.execute(
+            `INSERT INTO teachers (user_id, school_id, department, specialization, phone, address, qualification, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [user_id, school_id, department || null, specialization || null, phone || null, address || null, qualification || null]
+        );
+        return { id: result.insertId, ...teacherData };
+    } catch (error) {
+        throw new Error(`Failed to create teacher: ${error.message}`);
+    }
 };
 
-/**
- * Find all teachers in a school
- * @param {number} school_id - School ID
- * @returns {Promise} Array of teachers
- */
-export const findBySchool = async (school_id) => {
-    const [rows] = await db.query(
-        `SELECT t.*, u.email, u.username, u.is_active
-         FROM teachers t
-         INNER JOIN users u ON t.user_id = u.user_id
-         WHERE t.school_id = ?
-         ORDER BY t.last_name, t.first_name`,
-        [school_id]
-    );
-    return rows;
+export const findById = async (teacherId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT t.*, u.email, u.first_name, u.last_name, u.is_active,
+                    s.name as school_name
+             FROM teachers t
+             JOIN users u ON t.user_id = u.id
+             LEFT JOIN schools s ON t.school_id = s.id
+             WHERE t.id = ?`,
+            [teacherId]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to find teacher: ${error.message}`);
+    }
 };
 
-/**
- * Find teacher by ID
- * @param {number} teacher_id - Teacher ID
- * @returns {Promise} Teacher data
- */
-export const findById = async (teacher_id) => {
-    const [rows] = await db.query(
-        `SELECT t.*, u.email, u.username, u.is_active
-         FROM teachers t
-         INNER JOIN users u ON t.user_id = u.user_id
-         WHERE t.teacher_id = ?`,
-        [teacher_id]
-    );
-    return rows[0] || null;
+export const findByUserId = async (userId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT t.*, u.email, u.first_name, u.last_name, u.is_active,
+                    s.name as school_name
+             FROM teachers t
+             JOIN users u ON t.user_id = u.id
+             LEFT JOIN schools s ON t.school_id = s.id
+             WHERE t.user_id = ?`,
+            [userId]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to find teacher by user: ${error.message}`);
+    }
 };
 
-/**
- * Find teacher by user ID
- * @param {number} user_id - User ID
- * @returns {Promise} Teacher data
- */
-export const findByUserId = async (user_id) => {
-    const [rows] = await db.query(
-        `SELECT t.*, u.email, u.username, u.is_active
-         FROM teachers t
-         INNER JOIN users u ON t.user_id = u.user_id
-         WHERE t.user_id = ?`,
-        [user_id]
-    );
-    return rows[0] || null;
+export const findBySchool = async (schoolId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT t.*, u.email, u.first_name, u.last_name, u.is_active
+             FROM teachers t
+             JOIN users u ON t.user_id = u.id
+             WHERE t.school_id = ?
+             ORDER BY u.last_name, u.first_name`,
+            [schoolId]
+        );
+        return rows;
+    } catch (error) {
+        throw new Error(`Failed to find teachers by school: ${error.message}`);
+    }
 };
 
-/**
- * Update teacher details
- * @param {number} teacher_id - Teacher ID
- * @param {Object} updateData - Data to update
- * @returns {Promise} Database result
- */
-export const update = async (teacher_id, updateData) => {
-    const { first_name, last_name, qualification, phone } = updateData;
-    const [result] = await db.execute(
-        'UPDATE teachers SET first_name = ?, last_name = ?, qualification = ?, phone = ? WHERE teacher_id = ?',
-        [first_name, last_name, qualification, phone, teacher_id]
-    );
-    return result;
+export const findByDepartment = async (schoolId, department) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT t.*, u.email, u.first_name, u.last_name, u.is_active
+             FROM teachers t
+             JOIN users u ON t.user_id = u.id
+             WHERE t.school_id = ? AND t.department = ?
+             ORDER BY u.last_name, u.first_name`,
+            [schoolId, department]
+        );
+        return rows;
+    } catch (error) {
+        throw new Error(`Failed to find teachers by department: ${error.message}`);
+    }
 };
 
-/**
- * Get classes taught by a teacher
- * @param {number} teacher_id - Teacher ID
- * @returns {Promise} Array of classes
- */
-export const getClasses = async (teacher_id) => {
-    const [rows] = await db.query(
-        `SELECT c.*
-         FROM classes c
-         WHERE c.class_teacher_id = ?
-         ORDER BY c.level, c.name`,
-        [teacher_id]
-    );
-    return rows;
-};
+export const update = async (teacherId, updates) => {
+    const allowedFields = ['department', 'specialization', 'phone', 'address', 'qualification'];
+    const updateFields = [];
+    const updateValues = [];
 
-/**
- * Get course offerings by teacher
- * @param {number} teacher_id - Teacher ID
- * @param {number} term_id - Optional term ID filter
- * @returns {Promise} Array of course offerings
- */
-export const getCourseOfferings = async (teacher_id, term_id = null) => {
-    let query = `
-        SELECT co.*, s.name as subject_name, s.code as subject_code,
-               c.name as class_name, t.name as term_name
-        FROM course_offerings co
-        INNER JOIN subjects s ON co.subject_id = s.subject_id
-        LEFT JOIN classes c ON co.class_id = c.class_id
-        INNER JOIN terms t ON co.term_id = t.term_id
-        WHERE co.teacher_id = ?`;
-
-    const params = [teacher_id];
-
-    if (term_id) {
-        query += ' AND co.term_id = ?';
-        params.push(term_id);
+    for (const [key, value] of Object.entries(updates)) {
+        if (allowedFields.includes(key)) {
+            updateFields.push(`${key} = ?`);
+            updateValues.push(value);
+        }
     }
 
-    query += ' ORDER BY t.start_date DESC, s.name';
+    if (updateFields.length === 0) return { affectedRows: 0 };
 
-    const [rows] = await db.query(query, params);
-    return rows;
+    updateFields.push('updated_at = NOW()');
+    updateValues.push(teacherId);
+
+    try {
+        const [result] = await db.execute(
+            `UPDATE teachers SET ${updateFields.join(', ')} WHERE id = ?`,
+            updateValues
+        );
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to update teacher: ${error.message}`);
+    }
 };
 
-/**
- * Count teachers by school
- * @param {number} school_id - School ID
- * @returns {Promise} Teacher count
- */
-export const countBySchool = async (school_id) => {
-    const [rows] = await db.query(
-        'SELECT COUNT(*) as count FROM teachers WHERE school_id = ?',
-        [school_id]
-    );
-    return rows[0].count;
+export const deleteTeacher = async (teacherId) => {
+    try {
+        const [result] = await db.execute(
+            'DELETE FROM teachers WHERE id = ?',
+            [teacherId]
+        );
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to delete teacher: ${error.message}`);
+    }
 };
 
-/**
- * Delete teacher
- * @param {number} teacher_id - Teacher ID
- * @returns {Promise} Database result
- */
-export const deleteTeacher = async (teacher_id) => {
-    const [result] = await db.execute(
-        'DELETE FROM teachers WHERE teacher_id = ?',
-        [teacher_id]
-    );
-    return result;
+export const getCountBySchool = async (schoolId) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT COUNT(*) as count FROM teachers WHERE school_id = ?',
+            [schoolId]
+        );
+        return rows[0]?.count || 0;
+    } catch (error) {
+        throw new Error(`Failed to count teachers: ${error.message}`);
+    }
+};
+
+export const getCountByDepartment = async (schoolId, department) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT COUNT(*) as count FROM teachers WHERE school_id = ? AND department = ?',
+            [schoolId, department]
+        );
+        return rows[0]?.count || 0;
+    } catch (error) {
+        throw new Error(`Failed to count teachers by department: ${error.message}`);
+    }
+};
+
+export const getTeacherCourses = async (teacherId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT DISTINCT co.*, s.name as subject_name, c.name as class_name,
+                    t.name as term_name
+             FROM course_offerings co
+             JOIN subjects s ON co.subject_id = s.id
+             LEFT JOIN classes c ON co.class_id = c.id
+             JOIN academic_terms t ON co.term_id = t.id
+             WHERE co.teacher_id = ?
+             ORDER BY t.start_date DESC, s.name`,
+            [teacherId]
+        );
+        return rows;
+    } catch (error) {
+        throw new Error(`Failed to get teacher courses: ${error.message}`);
+    }
+};
+
+export default {
+    create,
+    findById,
+    findByUserId,
+    findBySchool,
+    findByDepartment,
+    update,
+    deleteTeacher,
+    getCountBySchool,
+    getCountByDepartment,
+    getTeacherCourses
 };

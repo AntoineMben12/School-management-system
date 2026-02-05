@@ -1,132 +1,138 @@
 import db from '../config/database.js';
 
 /**
- * Attendance Model
- * Handles database operations for attendance table
+ * Attendance Model - Handle all attendance database operations
  */
 
 /**
  * Create attendance record
- * @param {Object} attendanceData - Attendance data
- * @returns {Promise} Database result
  */
 export const create = async (attendanceData) => {
     const { offering_id, student_id, date, status } = attendanceData;
-    const [result] = await db.execute(
-        'INSERT INTO attendance (offering_id, student_id, date, status) VALUES (?, ?, ?, ?)',
-        [offering_id, student_id, date, status]
-    );
-    return { attendance_id: result.insertId, ...attendanceData };
-};
-
-/**
- * Update attendance status
- * @param {number} attendance_id - Attendance ID
- * @param {string} status - New status (present, absent, late, excused)
- * @returns {Promise} Database result
- */
-export const update = async (attendance_id, status) => {
-    const [result] = await db.execute(
-        'UPDATE attendance SET status = ? WHERE attendance_id = ?',
-        [status, attendance_id]
-    );
-    return result;
-};
-
-/**
- * Find attendance records by student
- * @param {number} student_id - Student ID
- * @param {number} offering_id - Optional course offering ID filter
- * @returns {Promise} Array of attendance records
- */
-export const findByStudent = async (student_id, offering_id = null) => {
-    let query = 'SELECT * FROM attendance WHERE student_id = ?';
-    const params = [student_id];
-
-    if (offering_id) {
-        query += ' AND offering_id = ?';
-        params.push(offering_id);
+    
+    try {
+        const [result] = await db.execute(
+            `INSERT INTO attendance (offering_id, student_id, date, status)
+             VALUES (?, ?, ?, ?)`,
+            [offering_id, student_id, date, status]
+        );
+        return { attendance_id: result.insertId, ...attendanceData };
+    } catch (error) {
+        throw new Error(`Failed to create attendance record: ${error.message}`);
     }
-
-    query += ' ORDER BY date DESC';
-
-    const [rows] = await db.query(query, params);
-    return rows;
 };
 
 /**
- * Find attendance records by course offering
- * @param {number} offering_id - Course offering ID
- * @param {string} date - Optional date filter
- * @returns {Promise} Array of attendance records
+ * Find attendance by ID
  */
-export const findByOffering = async (offering_id, date = null) => {
-    let query = 'SELECT * FROM attendance WHERE offering_id = ?';
-    const params = [offering_id];
-
-    if (date) {
-        query += ' AND date = ?';
-        params.push(date);
-    }
-
-    query += ' ORDER BY date DESC, student_id';
-
-    const [rows] = await db.query(query, params);
-    return rows;
-};
-
-/**
- * Find attendance record by student, offering, and date
- * @param {number} student_id - Student ID
- * @param {number} offering_id - Course offering ID
- * @param {string} date - Date
- * @returns {Promise} Attendance record or null
- */
-export const findByStudentOfferingDate = async (student_id, offering_id, date) => {
+export const findById = async (attendance_id) => {
     const [rows] = await db.query(
-        'SELECT * FROM attendance WHERE student_id = ? AND offering_id = ? AND date = ?',
-        [student_id, offering_id, date]
+        `SELECT a.*, s.first_name, s.last_name, s.admission_number
+         FROM attendance a
+         JOIN students s ON a.student_id = s.student_id
+         WHERE a.attendance_id = ?`,
+        [attendance_id]
     );
     return rows[0] || null;
 };
 
 /**
- * Get attendance statistics for a student
- * @param {number} student_id - Student ID
- * @param {number} offering_id - Optional course offering ID filter
- * @returns {Promise} Attendance statistics
+ * Find attendance for a student in a course
  */
-export const getStudentStats = async (student_id, offering_id = null) => {
-    let query = `
-        SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present,
-            SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent,
-            SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late,
-            SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused
-        FROM attendance 
-        WHERE student_id = ?`;
+export const findByStudentAndOffering = async (student_id, offering_id) => {
+    const [rows] = await db.query(
+        `SELECT * FROM attendance
+         WHERE student_id = ? AND offering_id = ?
+         ORDER BY date DESC`,
+        [student_id, offering_id]
+    );
+    return rows;
+};
 
-    const params = [student_id];
+/**
+ * Find attendance for a date in offering
+ */
+export const findByDate = async (offering_id, date) => {
+    const [rows] = await db.query(
+        `SELECT a.*, s.first_name, s.last_name, s.admission_number
+         FROM attendance a
+         JOIN students s ON a.student_id = s.student_id
+         WHERE a.offering_id = ? AND a.date = ?
+         ORDER BY s.last_name`,
+        [offering_id, date]
+    );
+    return rows;
+};
 
-    if (offering_id) {
-        query += ' AND offering_id = ?';
-        params.push(offering_id);
-    }
+/**
+ * Get attendance summary for a student
+ */
+export const getStudentSummary = async (student_id, offering_id) => {
+    const [rows] = await db.query(
+        `SELECT 
+            COUNT(*) as total_days,
+            SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
+            SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count,
+            SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count,
+            SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count,
+            ROUND((SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as attendance_percentage
+         FROM attendance
+         WHERE student_id = ? AND offering_id = ?`,
+        [student_id, offering_id]
+    );
+    return rows[0] || null;
+};
 
-    const [rows] = await db.query(query, params);
-    return rows[0];
+/**
+ * Get attendance report for a class on a date
+ */
+export const getClassAttendanceReport = async (offering_id, date) => {
+    const [rows] = await db.query(
+        `SELECT 
+            COUNT(*) as total_students,
+            SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
+            SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count
+         FROM attendance
+         WHERE offering_id = ? AND date = ?`,
+        [offering_id, date]
+    );
+    return rows[0] || null;
+};
+
+/**
+ * Update attendance
+ */
+export const update = async (attendance_id, updates) => {
+    const allowedFields = ['status'];
+    const fields = [];
+    const values = [];
+
+    Object.entries(updates).forEach(([key, value]) => {
+        if (allowedFields.includes(key)) {
+            fields.push(`${key} = ?`);
+            values.push(value);
+        }
+    });
+
+    if (fields.length === 0) return { affectedRows: 0 };
+
+    values.push(attendance_id);
+    const [result] = await db.execute(
+        `UPDATE attendance SET ${fields.join(', ')} WHERE attendance_id = ?`,
+        values
+    );
+    return result;
 };
 
 /**
  * Delete attendance record
- * @param {number} attendance_id - Attendance ID
- * @returns {Promise} Database result
  */
-export const deleteRecord = async (attendance_id) => {
+export const deleteAttendance = async (attendance_id) => {
     const [result] = await db.execute(
-        'DELETE FROM attendance WHERE attendance_id = ?',
+        `DELETE FROM attendance WHERE attendance_id = ?`,
         [attendance_id]
     );
     return result;
 };
+
+export default { create, findById, findByStudentAndOffering, findByDate, getStudentSummary, getClassAttendanceReport, update, deleteAttendance };

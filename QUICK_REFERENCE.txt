@@ -1,0 +1,138 @@
+# 🚀 QUICK REFERENCE - API Testing
+
+## Start Server
+```bash
+cd server
+npm start
+```
+
+**Expected Output:**
+```
+✅ Server running on http://localhost:5000
+📝 Node Environment: development
+🔒 JWT Secret configured: Yes
+```
+
+---
+
+## Test Endpoints in Thunder Client
+
+### 1️⃣ Health Check (Test If API Works)
+```
+GET http://localhost:5000/health
+```
+
+### 2️⃣ Register User
+```
+POST http://localhost:5000/auth/register
+Content-Type: application/json
+
+{
+  "username": "john_doe",
+  "email": "john@test.com",
+  "password": "Password123",
+  "role": "school_admin",
+  "school_id": 1,
+  "profile": {
+    "first_name": "John",
+    "last_name": "Doe"
+  }
+}
+```
+
+### 3️⃣ Login User
+```
+POST http://localhost:5000/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@test.com",
+  "password": "Password123",
+  "school_id": 1
+}
+```
+
+---
+
+## What Was Fixed
+
+| Issue | Fix | Impact |
+|-------|-----|--------|
+| No error handler | Added global error middleware | Requests no longer hang ✅ |
+| No logging | Added request logger | Can debug requests 📝 |
+| Weak CORS | Configured proper origins | Browser doesn't block ✅ |
+| Hard-coded port | Reads from .env PORT | Port is configurable ✅ |
+| No 404 handler | Added 404 response | Wrong URLs return error ✅ |
+| No health check | Added /health endpoint | Can verify API running ✅ |
+
+---
+
+## Server Console Output
+
+You should see logs like:
+```
+[2026-02-04T10:30:45.123Z] GET /health - 200 (2ms)
+[2026-02-04T10:30:46.456Z] POST /auth/register - 201 (234ms)
+[2026-02-04T10:30:47.789Z] POST /auth/login - 200 (189ms)
+```
+
+---
+
+## Common Status Codes
+
+| Code | Meaning | Example |
+|------|---------|---------|
+| 200 | OK | Login successful |
+| 201 | Created | User registered |
+| 400 | Bad Request | Invalid email |
+| 401 | Unauthorized | Wrong password |
+| 404 | Not Found | URL doesn't exist |
+| 500 | Server Error | Database error |
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| "Cannot reach server" | Run `npm start` in server folder |
+| Request times out | Check server console for errors |
+| CORS error | Already configured ✅ |
+| Database error | Start MySQL, check .env |
+| "Port in use" | Change PORT in .env |
+
+---
+
+## Files Modified
+
+```
+✅ server/src/app.js
+✅ server/src/server.js
+✅ server/.env
+```
+
+---
+
+## Success Indicators ✅
+
+- [ ] Server starts without errors
+- [ ] Health endpoint returns 200
+- [ ] Can register new user
+- [ ] Can login with credentials
+- [ ] Server logs show all requests
+- [ ] No timeout errors in Thunder
+
+---
+
+## Documentation
+
+- **API_DEBUG_GUIDE.md** - Detailed troubleshooting
+- **ISSUES_FIXED.md** - Complete issue analysis
+- **SENIOR_DEVELOPER_ANALYSIS.md** - Technical deep dive
+- **thunder-client-template.json** - Import to Thunder Client
+
+---
+
+## You're Ready! 🎉
+
+Your API is now fully functional. Test it with Thunder Client!

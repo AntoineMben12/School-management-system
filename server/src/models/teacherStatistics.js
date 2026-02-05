@@ -1,132 +1,196 @@
 import db from '../config/database.js';
 
 /**
- * Teacher Statistics Model
- * Handles database operations for teacher_statistics table
+ * Teacher Statistics Model - Comprehensive CRUD operations
+ * Manages teacher performance metrics, evaluation scores, and teaching statistics
  */
 
-/**
- * Create teacher statistics record
- * @param {Object} statsData - Statistics data
- * @returns {Promise} Database result
- */
 export const create = async (statsData) => {
-    const { teacher_id, term_id, total_classes, classes_taught, student_avg_score, attendance_rate } = statsData;
-    const [result] = await db.execute(
-        `INSERT INTO teacher_statistics 
-         (teacher_id, term_id, total_classes, classes_taught, student_avg_score, attendance_rate) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [teacher_id, term_id, total_classes || 0, classes_taught || 0, student_avg_score || 0, attendance_rate || 0]
-    );
-    return { stat_id: result.insertId, ...statsData };
+    const { teacher_id, term_id, total_classes, classes_taught, student_avg_score, attendance_rate, evaluation_score } = statsData;
+    try {
+        const [result] = await db.execute(
+            `INSERT INTO teacher_statistics (teacher_id, term_id, total_classes, classes_taught, student_avg_score, attendance_rate, evaluation_score, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [teacher_id, term_id, total_classes || 0, classes_taught || 0, student_avg_score || 0, attendance_rate || 0, evaluation_score || 0]
+        );
+        return { id: result.insertId, ...statsData };
+    } catch (error) {
+        throw new Error(`Failed to create teacher statistics: ${error.message}`);
+    }
 };
 
-/**
- * Update teacher statistics
- * @param {number} stat_id - Statistics ID
- * @param {Object} updateData - Data to update
- * @returns {Promise} Database result
- */
-export const update = async (stat_id, updateData) => {
-    const { total_classes, classes_taught, student_avg_score, attendance_rate } = updateData;
-    const [result] = await db.execute(
-        `UPDATE teacher_statistics 
-         SET total_classes = ?, classes_taught = ?, student_avg_score = ?, attendance_rate = ? 
-         WHERE stat_id = ?`,
-        [total_classes, classes_taught, student_avg_score, attendance_rate, stat_id]
-    );
-    return result;
+export const findById = async (statsId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT ts.*, t.id as teacher_id, u.first_name, u.last_name,
+                    term.name as term_name, ay.name as year_name
+             FROM teacher_statistics ts
+             JOIN teachers t ON ts.teacher_id = t.id
+             JOIN users u ON t.user_id = u.id
+             LEFT JOIN academic_terms term ON ts.term_id = term.id
+             LEFT JOIN academic_years ay ON term.academic_year_id = ay.id
+             WHERE ts.id = ?`,
+            [statsId]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to find teacher statistics: ${error.message}`);
+    }
 };
 
-/**
- * Find statistics by teacher
- * @param {number} teacher_id - Teacher ID
- * @param {number} term_id - Optional term ID filter
- * @returns {Promise} Array of statistics
- */
-export const findByTeacher = async (teacher_id, term_id = null) => {
-    let query = `
-        SELECT ts.*, t.name as term_name, ay.name as year_name
-        FROM teacher_statistics ts
-        INNER JOIN terms t ON ts.term_id = t.term_id
-        INNER JOIN academic_years ay ON t.year_id = ay.year_id
-        WHERE ts.teacher_id = ?`;
+export const findByTeacher = async (teacherId, termId = null) => {
+    try {
+        let query = `SELECT ts.*, term.name as term_name, ay.name as year_name
+                     FROM teacher_statistics ts
+                     LEFT JOIN academic_terms term ON ts.term_id = term.id
+                     LEFT JOIN academic_years ay ON term.academic_year_id = ay.id
+                     WHERE ts.teacher_id = ?`;
+        const params = [teacherId];
 
-    const params = [teacher_id];
+        if (termId) {
+            query += ' AND ts.term_id = ?';
+            params.push(termId);
+        }
 
-    if (term_id) {
-        query += ' AND ts.term_id = ?';
-        params.push(term_id);
+        query += ' ORDER BY term.start_date DESC';
+
+        const [rows] = await db.query(query, params);
+        return rows;
+    } catch (error) {
+        throw new Error(`Failed to find teacher statistics: ${error.message}`);
+    }
+};
+
+export const findByTerm = async (termId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT ts.*, u.first_name, u.last_name, t.id as teacher_id, t.department
+             FROM teacher_statistics ts
+             JOIN teachers t ON ts.teacher_id = t.id
+             JOIN users u ON t.user_id = u.id
+             WHERE ts.term_id = ?
+             ORDER BY ts.student_avg_score DESC, ts.evaluation_score DESC`,
+            [termId]
+        );
+        return rows;
+    } catch (error) {
+        throw new Error(`Failed to find statistics by term: ${error.message}`);
+    }
+};
+
+export const findByTeacherAndTerm = async (teacherId, termId) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT * FROM teacher_statistics WHERE teacher_id = ? AND term_id = ?',
+            [teacherId, termId]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to find teacher statistics by term: ${error.message}`);
+    }
+};
+
+export const update = async (statsId, updates) => {
+    const allowedFields = ['total_classes', 'classes_taught', 'student_avg_score', 'attendance_rate', 'evaluation_score'];
+    const updateFields = [];
+    const updateValues = [];
+
+    for (const [key, value] of Object.entries(updates)) {
+        if (allowedFields.includes(key)) {
+            updateFields.push(`${key} = ?`);
+            updateValues.push(value);
+        }
     }
 
-    query += ' ORDER BY t.start_date DESC';
+    if (updateFields.length === 0) return { affectedRows: 0 };
 
-    const [rows] = await db.query(query, params);
-    return rows;
+    updateFields.push('updated_at = NOW()');
+    updateValues.push(statsId);
+
+    try {
+        const [result] = await db.execute(
+            `UPDATE teacher_statistics SET ${updateFields.join(', ')} WHERE id = ?`,
+            updateValues
+        );
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to update teacher statistics: ${error.message}`);
+    }
 };
 
-/**
- * Find statistics by term
- * @param {number} term_id - Term ID
- * @returns {Promise} Array of statistics
- */
-export const findByTerm = async (term_id) => {
-    const [rows] = await db.query(
-        `SELECT ts.*, 
-                CONCAT(t.first_name, ' ', t.last_name) as teacher_name
-         FROM teacher_statistics ts
-         INNER JOIN teachers t ON ts.teacher_id = t.teacher_id
-         WHERE ts.term_id = ?
-         ORDER BY ts.student_avg_score DESC`,
-        [term_id]
-    );
-    return rows;
+export const deleteStats = async (statsId) => {
+    try {
+        const [result] = await db.execute(
+            'DELETE FROM teacher_statistics WHERE id = ?',
+            [statsId]
+        );
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to delete teacher statistics: ${error.message}`);
+    }
 };
 
-/**
- * Get statistics for a specific teacher and term
- * @param {number} teacher_id - Teacher ID
- * @param {number} term_id - Term ID
- * @returns {Promise} Statistics record or null
- */
-export const findByTeacherAndTerm = async (teacher_id, term_id) => {
-    const [rows] = await db.query(
-        'SELECT * FROM teacher_statistics WHERE teacher_id = ? AND term_id = ?',
-        [teacher_id, term_id]
-    );
-    return rows[0] || null;
+export const getTopTeachers = async (termId, limit = 10) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT ts.*, u.first_name, u.last_name, t.id as teacher_id, t.school_id, t.department
+             FROM teacher_statistics ts
+             JOIN teachers t ON ts.teacher_id = t.id
+             JOIN users u ON t.user_id = u.id
+             WHERE ts.term_id = ?
+             ORDER BY ts.student_avg_score DESC, ts.evaluation_score DESC
+             LIMIT ?`,
+            [termId, limit]
+        );
+        return rows;
+    } catch (error) {
+        throw new Error(`Failed to get top teachers: ${error.message}`);
+    }
 };
 
-/**
- * Delete statistics record
- * @param {number} stat_id - Statistics ID
- * @returns {Promise} Database result
- */
-export const deleteStats = async (stat_id) => {
-    const [result] = await db.execute(
-        'DELETE FROM teacher_statistics WHERE stat_id = ?',
-        [stat_id]
-    );
-    return result;
+export const getTeacherAverageScore = async (teacherId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT AVG(student_avg_score) as avg_score, AVG(evaluation_score) as avg_evaluation,
+                    AVG(attendance_rate) as avg_attendance
+             FROM teacher_statistics
+             WHERE teacher_id = ?`,
+            [teacherId]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to calculate average score: ${error.message}`);
+    }
 };
 
-/**
- * Get top performing teachers by term
- * @param {number} term_id - Term ID
- * @param {number} limit - Number of teachers to return
- * @returns {Promise} Array of top teachers
- */
-export const getTopTeachers = async (term_id, limit = 10) => {
-    const [rows] = await db.query(
-        `SELECT ts.*, 
-                CONCAT(t.first_name, ' ', t.last_name) as teacher_name,
-                t.school_id
-         FROM teacher_statistics ts
-         INNER JOIN teachers t ON ts.teacher_id = t.teacher_id
-         WHERE ts.term_id = ?
-         ORDER BY ts.student_avg_score DESC, ts.attendance_rate DESC
-         LIMIT ?`,
-        [term_id, limit]
-    );
-    return rows;
+export const getSchoolStatistics = async (schoolId) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT AVG(ts.student_avg_score) as avg_student_score,
+                    AVG(ts.evaluation_score) as avg_evaluation,
+                    COUNT(DISTINCT ts.teacher_id) as total_teachers,
+                    MAX(ts.student_avg_score) as highest_score,
+                    MIN(ts.student_avg_score) as lowest_score
+             FROM teacher_statistics ts
+             JOIN teachers t ON ts.teacher_id = t.id
+             WHERE t.school_id = ?`,
+            [schoolId]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        throw new Error(`Failed to get school statistics: ${error.message}`);
+    }
+};
+
+export default {
+    create,
+    findById,
+    findByTeacher,
+    findByTerm,
+    findByTeacherAndTerm,
+    update,
+    deleteStats,
+    getTopTeachers,
+    getTeacherAverageScore,
+    getSchoolStatistics
 };

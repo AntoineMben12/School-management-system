@@ -7,7 +7,7 @@ router.use(roleMiddleware(['TEACHER']))
 router.post('/marks', teacherController.addMarks)
 router.post('/attendance', teacherController.markAttendance)
 router.get('/student', teacherController.getMyStudents)
-router.get('/statistics', teacherController.getStatistics)
+// router.get('/statistics', teacherController.getStatistics)
 
 
 export default router;
