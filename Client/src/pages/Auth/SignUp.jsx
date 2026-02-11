@@ -8,6 +8,7 @@ function SignUp() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [schoolId, setSchoolId] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,6 +34,10 @@ function SignUp() {
       setError("Password must be at least 8 characters");
       return;
     }
+    if (!schoolId.trim()) {
+      setError("School ID is required");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -41,8 +46,12 @@ function SignUp() {
         email,
         password,
         role,
+        school_id: parseInt(schoolId),
       });
 
+      // Store user info
+      localStorage.setItem('user', JSON.stringify(result.user));
+      
       // Signup successful, redirect to dashboard based on role
       const roleRoute = {
         "School Admin": "/admin/dashboard",
@@ -115,6 +124,29 @@ function SignUp() {
 
           {/* Signup Form */}
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+            {/* School ID Field */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal ml-1" htmlFor="schoolId">
+                School ID
+              </label>
+              <div className="relative group">
+                <input
+                  className="form-input block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-base text-[#131118] dark:text-white placeholder-[#706189] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600"
+                  id="schoolId"
+                  placeholder="1"
+                  type="number"
+                  value={schoolId}
+                  onChange={(e) => setSchoolId(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  min="1"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[#706189]">
+                  <span className="material-symbols-outlined text-[20px]">apartment</span>
+                </div>
+              </div>
+            </div>
+
             {/* Full Name Field */}
             <div className="flex flex-col gap-2">
               <label className="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal ml-1" htmlFor="name">

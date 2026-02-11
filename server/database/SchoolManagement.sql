@@ -292,4 +292,11 @@ CREATE TABLE ai_audit_logs (
     INDEX idx_ai_usage (school_id, created_at)
 );
 
+
+create table super_admin(
+	name varchar(30) primary key not null,
+    password_hash varchar(40),
+    email varchar(30),
+    phone_number varchar(30)
+);
 SHOW TABLES;

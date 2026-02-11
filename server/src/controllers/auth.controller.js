@@ -5,7 +5,7 @@ import AuthService from '../services/auth.service.js';
  */
 export const register = async (req, res, next) => {
     try {
-        const result = await AuthService.register(req.body);
+        const result = await AuthService.register(req);
         res.status(201).json(result);
     } catch (error) {
         next(error);

@@ -20,6 +20,29 @@
       "name": "Authentication",
       "requests": [
         {
+          "name": "Register Super Admin",
+          "method": "POST",
+          "url": "http://localhost:5000/auth/register",
+          "description": "Create a new super admin account (system-level access)",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "username": "super_admin_user",
+            "email": "admin@system.com",
+            "password": "SuperAdmin123",
+            "role": "super_admin",
+            "school_id": 1,
+            "profile": {
+              "first_name": "Super",
+              "last_name": "Admin"
+            }
+          }
+        },
+        {
           "name": "Register User",
           "method": "POST",
           "url": "http://localhost:5000/auth/register",
@@ -110,6 +133,179 @@
             "resetToken": "TOKEN_FROM_FORGOT_PASSWORD",
             "newPassword": "FinalPassword789"
           }
+        }
+      ]
+    },
+    {
+      "name": "Students - GET",
+      "requests": [
+        {
+          "name": "Get All Students",
+          "method": "GET",
+          "url": "http://localhost:5000/student",
+          "description": "Retrieve all students (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        },
+        {
+          "name": "Get Student by ID",
+          "method": "GET",
+          "url": "http://localhost:5000/student/1",
+          "description": "Retrieve a specific student by ID (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        }
+      ]
+    },
+    {
+      "name": "Teachers - GET",
+      "requests": [
+        {
+          "name": "Get All Teachers",
+          "method": "GET",
+          "url": "http://localhost:5000/teacher",
+          "description": "Retrieve all teachers (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        },
+        {
+          "name": "Get Teacher by ID",
+          "method": "GET",
+          "url": "http://localhost:5000/teacher/1",
+          "description": "Retrieve a specific teacher by ID (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        }
+      ]
+    },
+    {
+      "name": "Classes - GET",
+      "requests": [
+        {
+          "name": "Get All Classes",
+          "method": "GET",
+          "url": "http://localhost:5000/class",
+          "description": "Retrieve all classes (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        },
+        {
+          "name": "Get Class by ID",
+          "method": "GET",
+          "url": "http://localhost:5000/class/1",
+          "description": "Retrieve a specific class by ID (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        }
+      ]
+    },
+    {
+      "name": "Subjects - GET",
+      "requests": [
+        {
+          "name": "Get All Subjects",
+          "method": "GET",
+          "url": "http://localhost:5000/subject",
+          "description": "Retrieve all subjects (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        },
+        {
+          "name": "Get Subject by ID",
+          "method": "GET",
+          "url": "http://localhost:5000/subject/1",
+          "description": "Retrieve a specific subject by ID (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        }
+      ]
+    },
+    {
+      "name": "Marks - GET",
+      "requests": [
+        {
+          "name": "Get All Marks",
+          "method": "GET",
+          "url": "http://localhost:5000/mark",
+          "description": "Retrieve all marks (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        },
+        {
+          "name": "Get Student Marks",
+          "method": "GET",
+          "url": "http://localhost:5000/mark/student/1",
+          "description": "Retrieve marks for a specific student (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
+        }
+      ]
+    },
+    {
+      "name": "Reports - GET",
+      "requests": [
+        {
+          "name": "Get Report Card",
+          "method": "GET",
+          "url": "http://localhost:5000/reportCard/1",
+          "description": "Retrieve report card for a student (requires token)",
+          "headers": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_TOKEN_HERE"
+            }
+          ],
+          "body": null
         }
       ]
     }

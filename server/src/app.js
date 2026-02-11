@@ -89,8 +89,22 @@ app.use((error, req, res, next) => {
         timestamp: new Date().toISOString()
     });
 
-    const statusCode = error.status || error.statusCode || 500;
-    const message = error.message || 'Internal Server Error';
+    // Determine status code
+    let statusCode = error.status || error.statusCode || 500;
+    let message = error.message || 'Internal Server Error';
+    
+    // Handle specific error types
+    if (error.code === 'ER_NO_DB_ERROR') {
+        statusCode = 503;
+        message = 'Database connection failed';
+    } else if (error.code === 'ER_DUP_ENTRY') {
+        statusCode = 409;
+        message = 'Record already exists';
+    } else if (error.message.includes('Missing required fields')) {
+        statusCode = 400;
+    } else if (error.message.includes('Invalid')) {
+        statusCode = 400;
+    }
 
     res.status(statusCode).json({
         error: {

@@ -20,7 +20,7 @@ export const authAPI = {
           email: userData.email,
           password: userData.password,
           role: userData.role.toLowerCase().replace(' ', '_'),
-          school_id: userData.school_id || 1, // Default school_id, update as needed
+          school_id: userData.school_id || 1,
           profile: {
             first_name: userData.fullName.split(' ')[0],
             last_name: userData.fullName.split(' ').slice(1).join(' ') || 'User',
@@ -30,7 +30,8 @@ export const authAPI = {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Signup failed');
+        const errorMessage = errorData.error?.message || errorData.message || 'Signup failed';
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -60,13 +61,14 @@ export const authAPI = {
         body: JSON.stringify({
           email: credentials.email,
           password: credentials.password,
-          school_id: credentials.school_id || 1, // Default school_id, update as needed
+          school_id: credentials.school_id || 1,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+        const errorMessage = errorData.error?.message || errorData.message || 'Login failed';
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

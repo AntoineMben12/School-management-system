@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from '../config/database.js';
+import { sendEmail, getPasswordResetTemplate } from '../utils/email.util.js';
 
 /**
  * Auth Service
@@ -9,10 +10,15 @@ import db from '../config/database.js';
 class AuthService {
     /**
      * Register a new user
-     * @param {Object} userData - User registration data
+     * @param {Object} req - Express request object
      * @returns {Object} Created user and token
      */
-    static async register(userData) {
+
+    static async register(req) {
+        const userData = req.body;
+        if (!userData) {
+            throw new Error('No registration data provided');
+        }
         const { username, email, password, role, school_id, profile } = userData;
 
         // Validate required fields
@@ -267,12 +273,19 @@ class AuthService {
             { expiresIn: '1h' }
         );
 
-        // TODO: In production, send email with reset link containing the token
-        // For now, return the token (remove this in production)
+        // Generate reset link
+        const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+
+        // Send email
+
+        await sendEmail(
+            email,
+            'Password Reset Request',
+            getPasswordResetTemplate(resetLink)
+        );
+
         return {
-            message: 'Password reset token generated',
-            resetToken, // Remove this in production
-            // In production: send email to user.email with reset link
+            message: 'If the email exists, a reset link will be sent',
         };
     }
 
