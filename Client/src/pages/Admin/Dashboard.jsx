@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { adminAPI } from '../../services/api.js';
+import { X } from 'lucide-react';
 import {
     Bell,
     Mail,
@@ -14,80 +17,204 @@ import {
     Megaphone,
     FileText,
     TrendingUp,
-    TrendingDown
+    TrendingDown,
+    CheckCircle,
+    AlertCircle
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 function AdminDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    // Mock data for the attendance chart
-    const attendanceData = [
-        { day: 'Mon', students: 420, teachers: 78 },
-        { day: 'Tue', students: 450, teachers: 80 },
-        { day: 'Wed', students: 480, teachers: 82 },
-        { day: 'Thu', students: 470, teachers: 81 },
-        { day: 'Fri', students: 490, teachers: 83 },
-        { day: 'Sat', students: 380, teachers: 75 },
-        { day: 'Sun', students: 350, teachers: 70 },
-    ];
+    // Dashboard data state
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dashboardData, setDashboardData] = useState({
+        stats: { totalStudents: 0, totalTeachers: 0, attendancePercentage: 0 },
+        attendanceTrends: [],
+        recentActivity: []
+    });
 
-    // Mock data for recent updates
-    const recentUpdates = [
-        {
-            id: 1,
-            user: 'Sarah Smith',
-            action: 'uploaded grades for',
-            subject: 'Math 101',
-            time: '2 hours ago',
-            avatar: 'SS',
-            color: 'bg-purple-500'
-        },
-        {
-            id: 2,
-            type: 'event',
-            title: 'New event created: Science Fair 2024',
-            time: '5 hours ago',
-            icon: Calendar,
-            color: 'bg-blue-500'
-        },
-        {
-            id: 3,
-            user: 'John Doe',
-            action: 'New student registered:',
-            subject: 'John Doe',
-            time: '1 day ago',
-            avatar: 'JD',
-            color: 'bg-green-500'
+    // Modal states
+    const [activeModal, setActiveModal] = useState(null); // 'addStudent' | 'addTeacher' | 'announce' | null
+    const [modalLoading, setModalLoading] = useState(false);
+    const [modalMessage, setModalMessage] = useState({ type: '', text: '' });
+    const [classesList, setClassesList] = useState([]);
+
+    // Form data states
+    const [studentForm, setStudentForm] = useState({
+        first_name: '', last_name: '', email: '', admission_number: '', class_id: '', dob: '', gender: ''
+    });
+    const [teacherForm, setTeacherForm] = useState({
+        first_name: '', last_name: '', email: '', qualification: '', phone: ''
+    });
+    const [announceForm, setAnnounceForm] = useState({
+        title: '', content: '', audience: 'all'
+    });
+
+    // Fetch dashboard data from backend
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const data = await adminAPI.getDashboardData();
+                setDashboardData(data);
+            } catch (err) {
+                console.error('Failed to fetch dashboard data:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboard();
+    }, []);
+
+    // Fetch classes when Add Student modal opens
+    useEffect(() => {
+        if (activeModal === 'addStudent') {
+            adminAPI.getClassesList().then(setClassesList).catch(() => setClassesList([]));
         }
-    ];
+    }, [activeModal]);
+
+    // Quick Action handlers
+    const handleQuickAction = (actionName) => {
+        setModalMessage({ type: '', text: '' });
+        switch (actionName) {
+            case 'Add Student':
+                setStudentForm({ first_name: '', last_name: '', email: '', admission_number: '', class_id: '', dob: '', gender: '' });
+                setActiveModal('addStudent');
+                break;
+            case 'Add Teacher':
+                setTeacherForm({ first_name: '', last_name: '', email: '', qualification: '', phone: '' });
+                setActiveModal('addTeacher');
+                break;
+            case 'Announce':
+                setAnnounceForm({ title: '', content: '', audience: 'all' });
+                setActiveModal('announce');
+                break;
+            case 'Reports':
+                navigate('/admin/reportCard');
+                break;
+            default:
+                break;
+        }
+    };
+
+    const handleAddStudent = async (e) => {
+        e.preventDefault();
+        setModalLoading(true);
+        setModalMessage({ type: '', text: '' });
+        try {
+            const payload = { ...studentForm };
+            if (payload.class_id) payload.class_id = Number(payload.class_id);
+            else delete payload.class_id;
+            await adminAPI.addStudent(payload);
+            setModalMessage({ type: 'success', text: 'Student added successfully!' });
+            setTimeout(() => { setActiveModal(null); window.location.reload(); }, 1500);
+        } catch (err) {
+            setModalMessage({ type: 'error', text: err.message });
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    const handleAddTeacher = async (e) => {
+        e.preventDefault();
+        setModalLoading(true);
+        setModalMessage({ type: '', text: '' });
+        try {
+            await adminAPI.addTeacher(teacherForm);
+            setModalMessage({ type: 'success', text: 'Teacher added successfully!' });
+            setTimeout(() => { setActiveModal(null); window.location.reload(); }, 1500);
+        } catch (err) {
+            setModalMessage({ type: 'error', text: err.message });
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    const handleAnnounce = async (e) => {
+        e.preventDefault();
+        setModalLoading(true);
+        setModalMessage({ type: '', text: '' });
+        try {
+            await adminAPI.createAnnouncement(announceForm);
+            setModalMessage({ type: 'success', text: 'Announcement created successfully!' });
+            setTimeout(() => setActiveModal(null), 1500);
+        } catch (err) {
+            setModalMessage({ type: 'error', text: err.message });
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    // Format time for display
+    const formatTime = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffHours < 1) return 'Just now';
+        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        return date.toLocaleDateString();
+    };
+
+    // Build attendance chart data from backend
+    const attendanceData = dashboardData.attendanceTrends.length > 0
+        ? dashboardData.attendanceTrends
+        : [
+            { day: 'Mon', students: 0, teachers: 0 },
+            { day: 'Tue', students: 0, teachers: 0 },
+            { day: 'Wed', students: 0, teachers: 0 },
+            { day: 'Thu', students: 0, teachers: 0 },
+            { day: 'Fri', students: 0, teachers: 0 },
+        ];
+
+    // Build recent updates from backend data
+    const recentUpdates = dashboardData.recentActivity.length > 0
+        ? dashboardData.recentActivity.map((item, idx) => ({
+            id: item.id || idx,
+            user: item.user,
+            action: item.action || 'New student registered:',
+            subject: item.subject || '',
+            time: formatTime(item.time),
+            avatar: item.user ? item.user.split(' ').map(n => n[0]).join('') : '?',
+            color: ['bg-purple-500', 'bg-green-500', 'bg-blue-500'][idx % 3]
+        }))
+        : [];
 
     const navigationItems = [
-        { name: 'Dashboard', icon: LayoutDashboard, active: true },
-        { name: 'Students', icon: Users, active: false },
-        { name: 'Teachers', icon: GraduationCap, active: false },
-        { name: 'Classes', icon: BookOpen, active: false },
-        { name: 'Schedule', icon: Calendar, active: false },
-        { name: 'Reports', icon: BarChart3, active: false },
-        { name: 'Timetable', icon: Calendar, active: false },
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+        { name: 'Students', icon: Users, path: '/admin/student' },
+        { name: 'Teachers', icon: GraduationCap, path: '/admin/teacher' },
+        { name: 'Classes', icon: BookOpen, path: '/admin/classes' },
+        { name: 'Reports', icon: BarChart3, path: '/admin/reportCard' },
+        { name: 'Timetable', icon: Calendar, path: '/admin/Timetable' },
     ];
 
+    const { stats } = dashboardData;
     const statsCards = [
         {
             title: 'Total Students',
-            value: '1,240',
+            value: stats.totalStudents.toLocaleString(),
             icon: GraduationCap,
-            change: '+12',
-            trend: 'up',
+            change: '',
+            trend: 'stable',
             color: 'bg-purple-500',
             bgColor: 'bg-purple-50',
             iconBg: 'bg-purple-100'
         },
         {
             title: 'Total Teachers',
-            value: '84',
+            value: stats.totalTeachers.toLocaleString(),
             icon: Users,
-            change: 'Stable',
+            change: '',
             trend: 'stable',
             color: 'bg-orange-500',
             bgColor: 'bg-orange-50',
@@ -95,10 +222,10 @@ function AdminDashboard() {
         },
         {
             title: "Today's Attendance",
-            value: '92%',
+            value: `${stats.attendancePercentage}%`,
             icon: Calendar,
-            change: '-1.4%',
-            trend: 'down',
+            change: '',
+            trend: stats.attendancePercentage >= 90 ? 'up' : stats.attendancePercentage >= 70 ? 'stable' : 'down',
             color: 'bg-blue-500',
             bgColor: 'bg-blue-50',
             iconBg: 'bg-blue-100'
@@ -111,6 +238,37 @@ function AdminDashboard() {
         { name: 'Announce', icon: Megaphone, color: 'bg-blue-500', hoverColor: 'hover:bg-blue-600' },
         { name: 'Reports', icon: FileText, color: 'bg-purple-500', hoverColor: 'hover:bg-purple-600' }
     ];
+
+    if (loading) {
+        return (
+            <div className="flex h-screen bg-gray-50 items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-500 text-sm">Loading dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex h-screen bg-gray-50 items-center justify-center">
+                <div className="text-center bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-red-500 text-xl">!</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Failed to load dashboard</h3>
+                    <p className="text-sm text-gray-500 mb-4">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -136,7 +294,8 @@ function AdminDashboard() {
                     {navigationItems.map((item) => (
                         <button
                             key={item.name}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${item.active
+                            onClick={() => navigate(item.path)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname === item.path
                                 ? 'bg-purple-50 text-purple-600 font-medium'
                                 : 'text-gray-600 hover:bg-gray-50'
                                 }`}
@@ -181,15 +340,6 @@ function AdminDashboard() {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            {/* Search */}
-                            <div className="relative">
-                                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
-                                />
-                            </div>
 
                             {/* Notifications */}
                             <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
@@ -298,6 +448,7 @@ function AdminDashboard() {
                                 {quickActions.map((action, index) => (
                                     <button
                                         key={index}
+                                        onClick={() => handleQuickAction(action.name)}
                                         className={`${action.color} ${action.hoverColor} p-4 rounded-xl text-white transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 flex flex-col items-center justify-center gap-2 aspect-square`}
                                     >
                                         <action.icon className="w-6 h-6" />
@@ -386,6 +537,185 @@ function AdminDashboard() {
                     </div>
                 </div>
             </main>
+
+            {/* ── MODALS ── */}
+            {activeModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setActiveModal(null)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {activeModal === 'addStudent' && 'Add New Student'}
+                                {activeModal === 'addTeacher' && 'Add New Teacher'}
+                                {activeModal === 'announce' && 'Create Announcement'}
+                            </h3>
+                            <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Feedback message */}
+                        {modalMessage.text && (
+                            <div className={`mx-6 mt-4 p-3 rounded-lg flex items-center gap-2 text-sm ${modalMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                                }`}>
+                                {modalMessage.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                                {modalMessage.text}
+                            </div>
+                        )}
+
+                        {/* ── Add Student Form ── */}
+                        {activeModal === 'addStudent' && (
+                            <form onSubmit={handleAddStudent} className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                                        <input type="text" required value={studentForm.first_name}
+                                            onChange={e => setStudentForm({ ...studentForm, first_name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                                        <input type="text" required value={studentForm.last_name}
+                                            onChange={e => setStudentForm({ ...studentForm, last_name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                    <input type="email" required value={studentForm.email}
+                                        onChange={e => setStudentForm({ ...studentForm, email: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Admission Number *</label>
+                                        <input type="text" required value={studentForm.admission_number}
+                                            onChange={e => setStudentForm({ ...studentForm, admission_number: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                                        <select value={studentForm.class_id}
+                                            onChange={e => setStudentForm({ ...studentForm, class_id: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm">
+                                            <option value="">Select class...</option>
+                                            {classesList.map(c => (
+                                                <option key={c.class_id} value={c.class_id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                                        <input type="date" value={studentForm.dob}
+                                            onChange={e => setStudentForm({ ...studentForm, dob: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                        <select value={studentForm.gender}
+                                            onChange={e => setStudentForm({ ...studentForm, gender: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm">
+                                            <option value="">Select...</option>
+                                            <option value="M">Male</option>
+                                            <option value="F">Female</option>
+                                            <option value="O">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-400">Default password: Student@123</p>
+                                <button type="submit" disabled={modalLoading}
+                                    className="w-full py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-medium rounded-xl transition-colors">
+                                    {modalLoading ? 'Adding...' : 'Add Student'}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* ── Add Teacher Form ── */}
+                        {activeModal === 'addTeacher' && (
+                            <form onSubmit={handleAddTeacher} className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                                        <input type="text" required value={teacherForm.first_name}
+                                            onChange={e => setTeacherForm({ ...teacherForm, first_name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                                        <input type="text" required value={teacherForm.last_name}
+                                            onChange={e => setTeacherForm({ ...teacherForm, last_name: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                    <input type="email" required value={teacherForm.email}
+                                        onChange={e => setTeacherForm({ ...teacherForm, email: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                                        <input type="text" value={teacherForm.qualification}
+                                            onChange={e => setTeacherForm({ ...teacherForm, qualification: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                                            placeholder="e.g. M.Ed, B.Sc" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                        <input type="tel" value={teacherForm.phone}
+                                            onChange={e => setTeacherForm({ ...teacherForm, phone: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm" />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-400">Default password: Teacher@123</p>
+                                <button type="submit" disabled={modalLoading}
+                                    className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-medium rounded-xl transition-colors">
+                                    {modalLoading ? 'Adding...' : 'Add Teacher'}
+                                </button>
+                            </form>
+                        )}
+
+                        {/* ── Announcement Form ── */}
+                        {activeModal === 'announce' && (
+                            <form onSubmit={handleAnnounce} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                                    <input type="text" required value={announceForm.title}
+                                        onChange={e => setAnnounceForm({ ...announceForm, title: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        placeholder="Announcement title" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
+                                    <textarea required rows={4} value={announceForm.content}
+                                        onChange={e => setAnnounceForm({ ...announceForm, content: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm resize-none"
+                                        placeholder="Write your announcement..." />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+                                    <select value={announceForm.audience}
+                                        onChange={e => setAnnounceForm({ ...announceForm, audience: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm">
+                                        <option value="all">Everyone</option>
+                                        <option value="students">Students Only</option>
+                                        <option value="teachers">Teachers Only</option>
+                                        <option value="parents">Parents Only</option>
+                                    </select>
+                                </div>
+                                <button type="submit" disabled={modalLoading}
+                                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-medium rounded-xl transition-colors">
+                                    {modalLoading ? 'Publishing...' : 'Publish Announcement'}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

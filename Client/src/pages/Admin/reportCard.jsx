@@ -1,9 +1,9 @@
 import React from 'react'
 
-function reportCard() {
+function AdminreportCard() {
   return (
-    <div>reportCard</div>
+    <div>AdminreportCard</div>
   )
 }
 
-export default reportCard
+export default AdminreportCard

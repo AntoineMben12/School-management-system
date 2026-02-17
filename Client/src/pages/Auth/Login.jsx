@@ -7,6 +7,7 @@ function Login() {
   const navigate = useNavigate();
   const [role, setRole] = useState("Teacher");
   const [email, setEmail] = useState("");
+  const [schoolId, setSchoolId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -17,6 +18,10 @@ function Login() {
     e.preventDefault();
     setError("");
 
+    if (!schoolId.trim()) {
+      setError("School ID is required");
+      return;
+    }
     if (!email.trim()) {
       setError("Email is required");
       return;
@@ -32,6 +37,7 @@ function Login() {
         email,
         password,
         role,
+        school_id: parseInt(schoolId),
       });
 
       // Login successful, redirect to dashboard based on role
@@ -41,7 +47,7 @@ function Login() {
         "Teacher": "/teacher/dashboard",
         "Student": "/student/dashboard",
       };
-      
+
       // If rememberMe is checked, save credentials (not recommended for production)
       if (rememberMe) {
         localStorage.setItem("rememberEmail", email);
@@ -104,6 +110,29 @@ function Login() {
           )}
           {/* Login Form */}
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+            {/* School ID Field */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal ml-1" htmlFor="schoolId">
+                School ID
+              </label>
+              <div className="relative group">
+                <input
+                  className="form-input block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3.5 text-base text-[#131118] dark:text-white placeholder-[#706189] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all duration-200 shadow-sm group-hover:border-slate-300 dark:group-hover:border-slate-600"
+                  id="schoolId"
+                  placeholder="1"
+                  type="number"
+                  value={schoolId}
+                  onChange={(e) => setSchoolId(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  min="1"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[#706189]">
+                  <span className="material-symbols-outlined text-[20px]">apartment</span>
+                </div>
+              </div>
+            </div>
+
             {/* Email Field */}
             <div className="flex flex-col gap-2">
               <label className="text-[#131118] dark:text-slate-200 text-sm font-medium leading-normal ml-1" htmlFor="email">

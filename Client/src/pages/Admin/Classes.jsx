@@ -1,9 +1,9 @@
 import React from 'react'
 
-function Classes() {
+function AdminClasses() {
   return (
-    <div>Classes</div>
+    <div>AdminClasses</div>
   )
 }
 
-export default Classes
+export default AdminClasses

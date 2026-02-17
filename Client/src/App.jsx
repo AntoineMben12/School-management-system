@@ -14,6 +14,12 @@ import Features from './pages/Features.jsx';
 import Contact from './pages/Contact.jsx';
 import SignUp from './pages/Auth/SignUp.jsx';
 import AdminTimetableHub from './pages/Admin/Timetable.jsx';
+import AdminTeacher from './pages/Admin/Teacher.jsx';
+import AdminFees from './pages/Admin/Fees.jsx';
+import AdminClasses from './pages/Admin/Classes.jsx';
+import AdminreportCard from './pages/Admin/reportCard.jsx';
+import AdminStudent from './pages/Admin/Student.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 function App() {
   return (
@@ -28,21 +34,37 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
 
-        {/* admin Routes */}
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/Timetable" element={<AdminTimetableHub />} />
+        {/* Protected Routes */}
 
-        {/* superadmin Routes */}
-        <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
-        <Route path="/superadmin/schools" element={<School />} />
-        <Route path="/superadmin/licenses" element={<Licences />} />
-        <Route path="/superadmin/finance" element={<Finance />} />
+        {/* Admin Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['school_admin']} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/Timetable" element={<AdminTimetableHub />} />
+          <Route path="/admin/student" element={<AdminStudent />} />
+          <Route path="/admin/teacher" element={<AdminTeacher />} />
+          <Route path="/admin/fees" element={<AdminFees />} />
+          <Route path="/admin/classes" element={<AdminClasses />} />
+          <Route path="/admin/reportCard" element={<AdminreportCard />} />
+        </Route>
 
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
+        {/* SuperAdmin Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
+          <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+          <Route path="/superadmin/schools" element={<School />} />
+          <Route path="/superadmin/licenses" element={<Licences />} />
+          <Route path="/superadmin/finance" element={<Finance />} />
+        </Route>
 
-        {/* Teachers routes */}
-        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-        <Route path="/teacher/gradebook" element={<GradeBook />} />
+        {/* Student Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['student']} />}>
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+        </Route>
+
+        {/* Teacher Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/teacher/gradebook" element={<GradeBook />} />
+        </Route>
 
         {/* Catch-all route - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />

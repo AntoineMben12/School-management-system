@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  UserSquare2, 
-  BookOpen, 
-  Settings, 
-  Download, 
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  UserSquare2,
+  BookOpen,
+  Settings,
+  Download,
   Plus,
   MoreVertical,
   Clock,
@@ -15,14 +16,16 @@ import {
 
 const AdminTimetableHub = () => {
   const [isFixed, setIsFixed] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const sidebarItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: false },
-    { icon: Calendar, label: 'Timetable', active: true },
-    { icon: UserSquare2, label: 'Staff', active: false },
-    { icon: Users, label: 'Students', active: false },
-    { icon: BookOpen, label: 'Courses', active: false },
-    { icon: Settings, label: 'Settings', active: false },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: Calendar, label: 'Timetable', },
+    { icon: UserSquare2, label: 'Teachers', },
+    { icon: Users, label: 'Students', },
+    { icon: BookOpen, label: 'Classes', },
+    { icon: Settings, label: 'Settings' },
   ];
 
   const teachers = [
@@ -33,35 +36,35 @@ const AdminTimetableHub = () => {
   ];
 
   const scheduledClasses = [
-    { 
-      id: 1, 
-      subject: 'Physics', 
-      teacher: 'Mr. Newton', 
-      room: 'Lab 3A', 
-      time: '08:00 - 10:30', 
-      day: 'MON', 
+    {
+      id: 1,
+      subject: 'Physics',
+      teacher: 'Mr. Newton',
+      room: 'Lab 3A',
+      time: '08:00 - 10:30',
+      day: 'MON',
       load: '1/2 hrs',
-      color: 'border-purple-500' 
+      color: 'border-purple-500'
     },
-    { 
-      id: 2, 
-      subject: 'English Lit', 
-      teacher: 'Ms. Austen', 
-      room: 'Lib 2', 
-      time: '08:00 - 08:30', 
-      day: 'TUE', 
+    {
+      id: 2,
+      subject: 'English Lit',
+      teacher: 'Ms. Austen',
+      room: 'Lib 2',
+      time: '08:00 - 08:30',
+      day: 'TUE',
       load: '2/2 hrs',
-      color: 'border-emerald-500' 
+      color: 'border-emerald-500'
     },
-    { 
-      id: 3, 
-      subject: 'Adv. Math', 
-      teacher: 'Dr. A. Smith', 
-      room: 'Room 304', 
-      time: '09:00 - 10:30', 
-      day: 'WED', 
+    {
+      id: 3,
+      subject: 'Adv. Math',
+      teacher: 'Dr. A. Smith',
+      room: 'Room 304',
+      time: '09:00 - 10:30',
+      day: 'WED',
       load: '1/2 hrs',
-      color: 'border-orange-500' 
+      color: 'border-orange-500'
     },
   ];
 
@@ -83,11 +86,11 @@ const AdminTimetableHub = () => {
           {sidebarItems.map((item) => (
             <button
               key={item.label}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                item.active 
-                ? 'bg-[#F3E8FF] text-[#7C3AED] font-semibold' 
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${location.pathname === item.path
+                ? 'bg-[#F3E8FF] text-[#7C3AED] font-semibold'
                 : 'text-gray-500 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <item.icon size={20} />
               <span className="text-sm">{item.label}</span>
@@ -117,7 +120,7 @@ const AdminTimetableHub = () => {
               <h2 className="text-2xl font-bold">Timetable Configuration Hub</h2>
               <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
                 <span className={`text-xs font-medium ${!isFixed ? 'text-gray-400' : 'text-slate-900'}`}>Fixed Schedule</span>
-                <button 
+                <button
                   onClick={() => setIsFixed(!isFixed)}
                   className={`w-12 h-6 rounded-full relative transition-colors ${isFixed ? 'bg-gray-200' : 'bg-[#7C3AED]'}`}
                 >
@@ -153,11 +156,11 @@ const AdminTimetableHub = () => {
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{day}</span>
                   <span className="text-lg font-bold">{23 + idx}</span>
                 </div>
-                
+
                 {/* Simulated Grid Content */}
                 <div className="h-full relative">
                   {scheduledClasses.filter(c => c.day === day).map(item => (
-                    <div 
+                    <div
                       key={item.id}
                       className={`absolute left-2 right-2 top-4 p-4 bg-white rounded-2xl border-l-4 shadow-md ${item.color} group cursor-pointer hover:shadow-lg transition-all`}
                     >
@@ -234,8 +237,8 @@ const AdminTimetableHub = () => {
                     <span className="text-[#7C3AED]">{teacher.load}/{teacher.total} hrs</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#7C3AED] rounded-full" 
+                    <div
+                      className="h-full bg-[#7C3AED] rounded-full"
                       style={{ width: `${(teacher.load / teacher.total) * 100}%` }}
                     />
                   </div>

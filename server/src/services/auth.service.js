@@ -27,7 +27,7 @@ class AuthService {
         }
 
         // Validate role
-        const validRoles = ['super_admin', 'school_admin', 'teacher', 'student', 'parent', 'accountant'];
+        const validRoles = ['school_admin', 'teacher', 'student', 'parent', 'accountant'];
         if (!validRoles.includes(role)) {
             throw new Error(`Invalid role. Must be one of: ${validRoles.join(', ')}`);
         }
@@ -45,6 +45,17 @@ class AuthService {
 
             if (existingUsers.length > 0) {
                 throw new Error('Email already registered for this school');
+            }
+
+            // Prevent multiple School Admins
+            if (role === 'school_admin') {
+                const [existingAdmin] = await connection.query(
+                    'SELECT user_id FROM users WHERE school_id = ? AND role = "school_admin"',
+                    [school_id]
+                );
+                if (existingAdmin.length > 0) {
+                    throw new Error('School already has an administrator. Please contact them for access.');
+                }
             }
 
             // Hash password

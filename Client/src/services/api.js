@@ -118,4 +118,103 @@ export const authAPI = {
   }
 };
 
+// Admin API calls
+export const adminAPI = {
+  /**
+   * Get admin dashboard data (stats, attendance trends, recent activity)
+   * @returns {Promise<Object>} Dashboard data
+   */
+  getDashboardData: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authAPI.getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to fetch dashboard data');
+    }
+
+    return response.json();
+  },
+
+  addStudent: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/admin/students`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || errorData.message || 'Failed to add student');
+    }
+    return response.json();
+  },
+
+  addTeacher: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/admin/teachers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || errorData.message || 'Failed to add teacher');
+    }
+    return response.json();
+  },
+
+  createAnnouncement: async (data) => {
+    const response = await fetch(`${API_BASE_URL}/admin/announcements`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || errorData.message || 'Failed to create announcement');
+    }
+    return response.json();
+  },
+
+  getReportsSummary: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authAPI.getAuthHeader(),
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to fetch reports');
+    }
+    return response.json();
+  },
+
+  getClassesList: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/classes`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authAPI.getAuthHeader(),
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Failed to fetch classes');
+    }
+    return response.json();
+  },
+};
+
 export default authAPI;

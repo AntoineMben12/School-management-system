@@ -1,9 +1,9 @@
 import React from 'react'
 
-function Fees() {
+function AdminFees() {
   return (
-    <div>Fees</div>
+    <div>AdminFees</div>
   )
 }
 
-export default Fees
+export default AdminFees
