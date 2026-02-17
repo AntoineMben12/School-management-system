@@ -30,13 +30,13 @@ function App() {
         <Route path="/" element={<Features />} />
         <Route path="/contact" element={<Contact />} />
 
-        {/* Auth Routes */}
+        {/* Auth Routes */}//------------
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
 
         {/* Protected Routes */}
 
-        {/* Admin Routes */}
+        {/* Admin Routes */}// --------------
         <Route element={<ProtectedRoute allowedRoles={['school_admin']} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/Timetable" element={<AdminTimetableHub />} />
