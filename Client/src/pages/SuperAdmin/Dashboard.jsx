@@ -1,430 +1,855 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import * as api from "../../services/superadminAPI";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmtNumber(n) {
+  if (n === undefined || n === null) return "—";
+  return Number(n).toLocaleString();
+}
+
+function fmtCurrency(n) {
+  if (n === undefined || n === null) return "—";
+  return (
+    "$" +
+    Number(n).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+}
+
+function getInitials(name = "") {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+const AVATAR_COLORS = [
+  "from-blue-500 to-indigo-600",
+  "from-emerald-500 to-teal-600",
+  "from-orange-500 to-red-600",
+  "from-pink-500 to-rose-600",
+  "from-cyan-500 to-blue-600",
+  "from-violet-500 to-purple-600",
+  "from-amber-500 to-yellow-600",
+];
+
+function avatarColor(id) {
+  return AVATAR_COLORS[(id || 0) % AVATAR_COLORS.length];
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    expired: "bg-red-500/10 text-red-400 border-red-500/20",
+    suspended: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  };
+  const cls =
+    map[status] || "bg-slate-500/10 text-slate-400 border-slate-500/20";
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${cls}`}
+    >
+      {status ? status.charAt(0).toUpperCase() + status.slice(1) : "—"}
+    </span>
+  );
+}
+
+function PlanBadge({ plan }) {
+  const map = {
+    Enterprise: "bg-purple-500/10 text-purple-400 border-purple-500/10",
+    Premium: "bg-blue-500/10 text-blue-400 border-blue-500/10",
+    Standard: "bg-sky-500/10 text-sky-400 border-sky-500/10",
+    Basic: "bg-slate-500/10 text-slate-400 border-slate-500/10",
+  };
+  const cls = map[plan] || "bg-slate-500/10 text-slate-400 border-slate-500/10";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${cls}`}
+    >
+      <span className="size-1.5 rounded-full bg-current" />
+      {plan || "—"}
+    </span>
+  );
+}
+
+function StatCard({ icon, label, value, sub, barWidth, loading }) {
+  return (
+    <div className="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
+      <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+        <span className="material-symbols-outlined text-6xl text-primary">
+          {icon}
+        </span>
+      </div>
+      <p className="text-slate-400 text-sm font-medium mb-1">{label}</p>
+      <div className="flex items-baseline gap-3">
+        {loading ? (
+          <div className="h-9 w-32 bg-white/10 rounded animate-pulse" />
+        ) : (
+          <h3 className="text-3xl font-bold text-white">{value}</h3>
+        )}
+        {sub && !loading && (
+          <span className="flex items-center text-slate-400 text-xs font-medium bg-white/5 px-2 py-0.5 rounded-full">
+            {sub}
+          </span>
+        )}
+      </div>
+      {barWidth !== undefined && (
+        <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-700"
+            style={{ width: loading ? "0%" : `${barWidth}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Modal: Add New School ─────────────────────────────────────────────────────
+function AddSchoolModal({ onClose, onCreated }) {
+  const [form, setForm] = useState({
+    name: "",
+    address: "",
+    contact_email: "",
+    type: "secondary",
+    subdomain: "",
+    admin_username: "",
+    admin_email: "",
+    admin_password: "",
+    plan_name: "Basic",
+    max_students: 500,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (
+      !form.name ||
+      !form.contact_email ||
+      !form.admin_email ||
+      !form.admin_password
+    ) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.createSchool({
+        school: {
+          name: form.name,
+          address: form.address,
+          contact_email: form.contact_email,
+          type: form.type,
+          subdomain: form.subdomain || null,
+        },
+        license: {
+          plan_name: form.plan_name,
+          max_students: parseInt(form.max_students),
+        },
+        admin: {
+          username: form.admin_username || form.admin_email.split("@")[0],
+          email: form.admin_email,
+          password: form.admin_password,
+        },
+      });
+      onCreated();
+      onClose();
+    } catch (err) {
+      setError(err.message || "Failed to create school.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-[#1a1625] rounded-2xl border border-white/10 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <h2 className="text-white font-bold text-lg">Add New School</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+            School Details
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                School Name *
+              </label>
+              <input
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all placeholder-slate-500"
+                placeholder="e.g. Springfield High"
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                Contact Email *
+              </label>
+              <input
+                type="email"
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all placeholder-slate-500"
+                placeholder="school@edu.com"
+                value={form.contact_email}
+                onChange={(e) => set("contact_email", e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                School Type
+              </label>
+              <select
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all cursor-pointer"
+                value={form.type}
+                onChange={(e) => set("type", e.target.value)}
+              >
+                <option value="primary">Primary</option>
+                <option value="secondary">Secondary</option>
+                <option value="university">University</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                Address
+              </label>
+              <input
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all placeholder-slate-500"
+                placeholder="City, Country"
+                value={form.address}
+                onChange={(e) => set("address", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-2">
+            License
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">Plan</label>
+              <select
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all cursor-pointer"
+                value={form.plan_name}
+                onChange={(e) => set("plan_name", e.target.value)}
+              >
+                <option>Basic</option>
+                <option>Standard</option>
+                <option>Premium</option>
+                <option>Enterprise</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                Max Students
+              </label>
+              <input
+                type="number"
+                min="1"
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all"
+                value={form.max_students}
+                onChange={(e) => set("max_students", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-2">
+            Admin Account
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                Admin Email *
+              </label>
+              <input
+                type="email"
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all placeholder-slate-500"
+                placeholder="admin@school.edu"
+                value={form.admin_email}
+                onChange={(e) => set("admin_email", e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-slate-300 font-medium">
+                Password *
+              </label>
+              <input
+                type="password"
+                className="bg-[#2e2839] rounded-lg px-4 py-2.5 text-white text-sm outline-none border border-transparent focus:border-primary transition-all placeholder-slate-500"
+                placeholder="Min 6 characters"
+                value={form.admin_password}
+                onChange={(e) => set("admin_password", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-semibold shadow-lg shadow-primary/20 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <span className="material-symbols-outlined text-[18px] animate-spin">
+                    refresh
+                  </span>{" "}
+                  Creating…
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[18px]">
+                    add
+                  </span>{" "}
+                  Create School
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 function SuperAdminDashboard() {
-	return (
-		<div className="flex h-screen w-full">
-			{/* Sidebar Navigation */}
-			<aside className="w-72 shrink-0 flex flex-col border-r border-border-dark bg-[#131118] transition-all duration-300">
-				<div className="p-6 pb-2">
-					<div className="flex items-center gap-3">
-						<div className="bg-primary/20 p-2 rounded-lg text-primary">
-							<span className="material-symbols-outlined text-3xl">school</span>
-						</div>
-						<div className="flex flex-col">
-							<h1 className="text-white text-lg font-bold tracking-tight">SchoolOS</h1>
-							<p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Superadmin</p>
-						</div>
-					</div>
-				</div>
-				<nav className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-2">
-					<p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Main Menu</p>
-					<a className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary border-l-4 border-primary transition-all" href="#">
-						<span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>dashboard</span>
-						<span className="text-sm font-medium">Dashboard</span>
-					</a>
-					<a className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
-						<span className="material-symbols-outlined group-hover:text-white transition-colors">domain</span>
-						<span className="text-sm font-medium">Schools</span>
-					</a>
-					<a className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
-						<span className="material-symbols-outlined group-hover:text-white transition-colors">payments</span>
-						<span className="text-sm font-medium">Finance</span>
-					</a>
-					<a className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
-						<span className="material-symbols-outlined group-hover:text-white transition-colors">group</span>
-						<span className="text-sm font-medium">Users</span>
-					</a>
-					<div className="my-4 border-t border-white/5"></div>
-					<p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">System</p>
-					<a className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
-						<span className="material-symbols-outlined group-hover:text-white transition-colors">settings</span>
-						<span className="text-sm font-medium">Settings</span>
-					</a>
-					<a className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group" href="#">
-						<span className="material-symbols-outlined group-hover:text-white transition-colors">support</span>
-						<span className="text-sm font-medium">Support</span>
-					</a>
-				</nav>
-				<div className="p-4 border-t border-white/5">
-					<a className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-all" href="#">
-						<div
-							className="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-white/10"
-							data-alt="Profile picture of the superadmin user"
-							style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCvjoFkuTmidRBdJUo3xodn3rJ9TQlNUL7LeY7BPE_3JmG-pwtCh0vHRHibx19-1J9s98vJs7aUaPbg9QtOSii9QQYvCPHRrdrv-D-GJWo4NZv8iyKi9S9CrA_bAOuDvTPQXlvfVLcoFZ-WquMs0X0EIaP5iCRHh_GqLEMg0tL5dk9m0VOb2kCj9MZNrNQDIdgriFt-61mN3WisAFF-nRhY083cYGqAXqxIiOumfRWty-ak4JqdZUcKV_p0GJQaTd4ZY3xzwvSyems")' }}
-						></div>
-						<div className="flex flex-col min-w-0">
-							<p className="text-white text-sm font-medium truncate">Alexander P.</p>
-							<p className="text-slate-500 text-xs truncate">alex@edumanage.com</p>
-						</div>
-						<span className="material-symbols-outlined text-slate-500 ml-auto">logout</span>
-					</a>
-				</div>
-			</aside>
-			{/* Main Content Area */}
-			<main className="flex-1 flex flex-col h-full overflow-hidden bg-background-dark relative">
-				{/* Sticky Header */}
-				<header className="h-20 shrink-0 flex items-center justify-between px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-md z-20">
-					<div className="flex flex-col">
-						<h2 className="text-2xl font-bold tracking-tight text-white">Global Overview</h2>
-						<p className="text-slate-400 text-sm">Welcome back, here's what's happening today.</p>
-					</div>
-					<div className="flex items-center gap-6">
-						{/* Search Bar */}
-						<div className="relative w-80">
-							<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-								<span className="material-symbols-outlined text-slate-400 text-[20px]">search</span>
-							</div>
-							<input
-								className="block w-full rounded-full border-none bg-surface-dark py-2.5 pl-10 pr-3 text-sm placeholder:text-slate-500 text-white focus:ring-2 focus:ring-primary/50 transition-all"
-								placeholder="Search schools, licenses..."
-								type="text"
-							/>
-						</div>
-						{/* Notifications */}
-						<button className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/5">
-							<span className="material-symbols-outlined">notifications</span>
-							<span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-background-dark"></span>
-						</button>
-					</div>
-				</header>
-				{/* Scrollable Content */}
-				<div className="flex-1 overflow-y-auto p-8">
-					<div className="max-w-350 mx-auto space-y-8">
-						{/* Stats Grid */}
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-							{/* Stat Card 1 */}
-							<div className="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
-								<div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-									<span className="material-symbols-outlined text-6xl text-primary">school</span>
-								</div>
-								<p className="text-slate-400 text-sm font-medium mb-1">Total Schools</p>
-								<div className="flex items-baseline gap-3">
-									<h3 className="text-3xl font-bold text-white">1,240</h3>
-									<span className="flex items-center text-emerald-400 text-xs font-medium bg-emerald-400/10 px-2 py-0.5 rounded-full">
-										<span className="material-symbols-outlined text-[14px] mr-1">trending_up</span> +5%
-									</span>
-								</div>
-								<div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-									<div className="h-full bg-primary w-[75%] rounded-full"></div>
-								</div>
-							</div>
-							{/* Stat Card 2 */}
-							<div className="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
-								<div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-									<span className="material-symbols-outlined text-6xl text-primary">payments</span>
-								</div>
-								<p className="text-slate-400 text-sm font-medium mb-1">Monthly Revenue</p>
-								<div className="flex items-baseline gap-3">
-									<h3 className="text-3xl font-bold text-white">$420,500</h3>
-									<span className="flex items-center text-emerald-400 text-xs font-medium bg-emerald-400/10 px-2 py-0.5 rounded-full">
-										<span className="material-symbols-outlined text-[14px] mr-1">trending_up</span> +12%
-									</span>
-								</div>
-								<div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-									<div className="h-full bg-primary w-[60%] rounded-full"></div>
-								</div>
-							</div>
-							{/* Stat Card 3 */}
-							<div className="bg-surface-dark rounded-xl p-6 border border-white/5 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
-								<div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-									<span className="material-symbols-outlined text-6xl text-primary">verified_user</span>
-								</div>
-								<p className="text-slate-400 text-sm font-medium mb-1">Active Licenses</p>
-								<div className="flex items-baseline gap-3">
-									<h3 className="text-3xl font-bold text-white">45,200</h3>
-									<span className="flex items-center text-slate-400 text-xs font-medium bg-white/5 px-2 py-0.5 rounded-full">
-										98% utilization
-									</span>
-								</div>
-								<div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-									<div className="h-full bg-primary w-[98%] rounded-full"></div>
-								</div>
-							</div>
-						</div>
-						{/* Action Bar & Filters */}
-						<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-							<div className="flex gap-2">
-								<div className="relative">
-									<select className="appearance-none bg-surface-dark border border-white/10 text-white text-sm rounded-lg pl-3 pr-8 py-2 focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer">
-										<option>All Statuses</option>
-										<option>Active</option>
-										<option>Expired</option>
-										<option>Pending</option>
-									</select>
-									<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-										<span className="material-symbols-outlined text-[18px]">expand_more</span>
-									</div>
-								</div>
-								<div className="relative">
-									<select className="appearance-none bg-surface-dark border border-white/10 text-white text-sm rounded-lg pl-3 pr-8 py-2 focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer">
-										<option>Sort by Date</option>
-										<option>Sort by Name</option>
-										<option>Sort by Revenue</option>
-									</select>
-									<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-										<span className="material-symbols-outlined text-[18px]">expand_more</span>
-									</div>
-								</div>
-							</div>
-							<button className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg shadow-primary/20 transition-all">
-								<span className="material-symbols-outlined text-[20px]">add</span>
-								<span>Add New School</span>
-							</button>
-						</div>
-						{/* Data Table */}
-						<div className="bg-surface-dark rounded-xl border border-white/5 overflow-hidden shadow-sm">
-							<div className="overflow-x-auto">
-								<table className="w-full text-left border-collapse">
-									<thead>
-										<tr className="border-b border-white/5 bg-white/2">
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider">School Name</th>
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Admin Contact</th>
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider">Plan / Tier</th>
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Students</th>
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-center">Status</th>
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Renewal</th>
-											<th className="p-4 text-xs font-medium text-slate-400 uppercase tracking-wider text-right">Actions</th>
-										</tr>
-									</thead>
-									<tbody className="divide-y divide-white/5">
-										{/* Row 1 */}
-										<tr className="group hover:bg-white/2 transition-colors">
-											<td className="p-4">
-												<div className="flex items-center gap-3">
-													<div className="size-8 rounded bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">LH</div>
-													<div className="flex flex-col">
-														<span className="text-sm font-medium text-white">Lincoln High School</span>
-														<span className="text-xs text-slate-500">ID: #SCH-8832</span>
-													</div>
-												</div>
-											</td>
-											<td className="p-4">
-												<div className="flex flex-col">
-													<span className="text-sm text-slate-200">Sarah Connor</span>
-													<span className="text-xs text-slate-500">sarah@lincoln.edu</span>
-												</div>
-											</td>
-											<td className="p-4">
-												<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/10">
-													<span className="size-1.5 rounded-full bg-purple-400"></span> Enterprise
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-300 font-mono">2,450</td>
-											<td className="p-4 text-center">
-												<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
-													Active
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-400">Oct 24, 2024</td>
-											<td className="p-4 text-right">
-												<div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
-														<span className="material-symbols-outlined text-[20px]">login</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
-														<span className="material-symbols-outlined text-[20px]">edit</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
-														<span className="material-symbols-outlined text-[20px]">more_vert</span>
-													</button>
-												</div>
-											</td>
-										</tr>
-										{/* Row 2 */}
-										<tr className="group hover:bg-white/2 transition-colors">
-											<td className="p-4">
-												<div className="flex items-center gap-3">
-													<div className="size-8 rounded bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">SA</div>
-													<div className="flex flex-col">
-														<span className="text-sm font-medium text-white">St. Mary's Academy</span>
-														<span className="text-xs text-slate-500">ID: #SCH-9921</span>
-													</div>
-												</div>
-											</td>
-											<td className="p-4">
-												<div className="flex flex-col">
-													<span className="text-sm text-slate-200">Father John</span>
-													<span className="text-xs text-slate-500">john@stmarys.org</span>
-												</div>
-											</td>
-											<td className="p-4">
-												<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/10">
-													<span className="size-1.5 rounded-full bg-blue-400"></span> Standard
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-300 font-mono">850</td>
-											<td className="p-4 text-center">
-												<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/10">
-													Expired
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-red-400 font-medium">Yesterday</td>
-											<td className="p-4 text-right">
-												<div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
-														<span className="material-symbols-outlined text-[20px]">login</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
-														<span className="material-symbols-outlined text-[20px]">edit</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
-														<span className="material-symbols-outlined text-[20px]">more_vert</span>
-													</button>
-												</div>
-											</td>
-										</tr>
-										{/* Row 3 */}
-										<tr className="group hover:bg-white/2 transition-colors">
-											<td className="p-4">
-												<div className="flex items-center gap-3">
-													<div className="size-8 rounded bg-linear-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">WT</div>
-													<div className="flex flex-col">
-														<span className="text-sm font-medium text-white">West Tech Institute</span>
-														<span className="text-xs text-slate-500">ID: #SCH-1029</span>
-													</div>
-												</div>
-											</td>
-											<td className="p-4">
-												<div className="flex flex-col">
-													<span className="text-sm text-slate-200">Alan Turing</span>
-													<span className="text-xs text-slate-500">alan@westtech.edu</span>
-												</div>
-											</td>
-											<td className="p-4">
-												<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/10">
-													<span className="size-1.5 rounded-full bg-purple-400"></span> Enterprise
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-300 font-mono">5,200</td>
-											<td className="p-4 text-center">
-												<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
-													Active
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-400">Nov 15, 2024</td>
-											<td className="p-4 text-right">
-												<div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
-														<span className="material-symbols-outlined text-[20px]">login</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
-														<span className="material-symbols-outlined text-[20px]">edit</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
-														<span className="material-symbols-outlined text-[20px]">more_vert</span>
-													</button>
-												</div>
-											</td>
-										</tr>
-										{/* Row 4 */}
-										<tr className="group hover:bg-white/2 transition-colors">
-											<td className="p-4">
-												<div className="flex items-center gap-3">
-													<div className="size-8 rounded bg-linear-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">RA</div>
-													<div className="flex flex-col">
-														<span className="text-sm font-medium text-white">Riverdale Academy</span>
-														<span className="text-xs text-slate-500">ID: #SCH-3341</span>
-													</div>
-												</div>
-											</td>
-											<td className="p-4">
-												<div className="flex flex-col">
-													<span className="text-sm text-slate-200">Betty Cooper</span>
-													<span className="text-xs text-slate-500">betty@riverdale.edu</span>
-												</div>
-											</td>
-											<td className="p-4">
-												<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/10">
-													<span className="size-1.5 rounded-full bg-blue-400"></span> Standard
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-300 font-mono">1,100</td>
-											<td className="p-4 text-center">
-												<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/10">
-													Pending
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-400">--</td>
-											<td className="p-4 text-right">
-												<div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
-														<span className="material-symbols-outlined text-[20px]">login</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
-														<span className="material-symbols-outlined text-[20px]">edit</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
-														<span className="material-symbols-outlined text-[20px]">more_vert</span>
-													</button>
-												</div>
-											</td>
-										</tr>
-										{/* Row 5 */}
-										<tr className="group hover:bg-white/2 transition-colors">
-											<td className="p-4">
-												<div className="flex items-center gap-3">
-													<div className="size-8 rounded bg-linear-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-inner">GP</div>
-													<div className="flex flex-col">
-														<span className="text-sm font-medium text-white">Grand Park Primary</span>
-														<span className="text-xs text-slate-500">ID: #SCH-5512</span>
-													</div>
-												</div>
-											</td>
-											<td className="p-4">
-												<div className="flex flex-col">
-													<span className="text-sm text-slate-200">Leslie Knope</span>
-													<span className="text-xs text-slate-500">leslie@grandpark.gov</span>
-												</div>
-											</td>
-											<td className="p-4">
-												<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/10">
-													<span className="size-1.5 rounded-full bg-blue-400"></span> Standard
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-300 font-mono">420</td>
-											<td className="p-4 text-center">
-												<span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
-													Active
-												</span>
-											</td>
-											<td className="p-4 text-right text-sm text-slate-400">Dec 01, 2024</td>
-											<td className="p-4 text-right">
-												<div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Login as Admin">
-														<span className="material-symbols-outlined text-[20px]">login</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="Edit">
-														<span className="material-symbols-outlined text-[20px]">edit</span>
-													</button>
-													<button className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="More">
-														<span className="material-symbols-outlined text-[20px]">more_vert</span>
-													</button>
-												</div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-							{/* Pagination */}
-							<div className="flex items-center justify-between p-4 border-t border-white/5 bg-white/2">
-								<p className="text-xs text-slate-500">
-									Showing <span className="text-white font-medium">1-5</span> of <span className="text-white font-medium">1,240</span> schools
-								</p>
-								<div className="flex items-center gap-2">
-									<button className="p-1 rounded hover:bg-white/10 text-slate-400 disabled:opacity-50 transition-colors">
-										<span className="material-symbols-outlined text-[20px]">chevron_left</span>
-									</button>
-									<button className="p-1 rounded hover:bg-white/10 text-slate-400 transition-colors">
-										<span className="material-symbols-outlined text-[20px]">chevron_right</span>
-									</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</main>
-		</div>
-	);
-};
+  const navigate = useNavigate();
+
+  // Metrics
+  const [metrics, setMetrics] = useState(null);
+  const [metricsLoading, setMetricsLoading] = useState(true);
+
+  // Schools table
+  const [schools, setSchools] = useState([]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 8,
+    totalPages: 1,
+  });
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [tableLoading, setTableLoading] = useState(true);
+
+  // Modal
+  const [showModal, setShowModal] = useState(false);
+
+  // Toast
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  // ── Fetch metrics ──
+  const fetchMetrics = useCallback(async () => {
+    setMetricsLoading(true);
+    try {
+      const data = await api.getDashboardMetrics();
+      setMetrics(data);
+    } catch {
+      // silent — still show zeros
+    } finally {
+      setMetricsLoading(false);
+    }
+  }, []);
+
+  // ── Fetch schools ──
+  const fetchSchools = useCallback(
+    async (page = 1) => {
+      setTableLoading(true);
+      try {
+        const data = await api.getSchools({
+          page,
+          limit: pagination.limit,
+          search,
+          status: statusFilter,
+        });
+        setSchools(data.data || []);
+        setPagination(data.pagination || {});
+      } catch {
+        setSchools([]);
+      } finally {
+        setTableLoading(false);
+      }
+    },
+    [search, statusFilter, pagination.limit],
+  );
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
+  useEffect(() => {
+    fetchSchools(1);
+  }, [search, statusFilter]);
+
+  const handleDelete = async (schoolId, schoolName) => {
+    if (!window.confirm(`Delete "${schoolName}"? This cannot be undone.`))
+      return;
+    try {
+      await api.deleteSchool(schoolId);
+      showToast("School deleted successfully.");
+      fetchSchools(pagination.page);
+      fetchMetrics();
+    } catch (err) {
+      showToast(err.message || "Failed to delete school.", "error");
+    }
+  };
+
+  const totalLicenses = metrics
+    ? (metrics.active_licenses || 0) +
+      (metrics.expired_licenses || 0) +
+      (metrics.suspended_licenses || 0)
+    : 0;
+
+  const activePct =
+    totalLicenses > 0
+      ? Math.round(((metrics?.active_licenses || 0) / totalLicenses) * 100)
+      : 0;
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-background-dark">
+      <Sidebar />
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Header */}
+        <header className="h-16 shrink-0 flex items-center justify-between px-8 border-b border-white/5 bg-background-dark/80 backdrop-blur-md z-10">
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-tight">
+              Global Overview
+            </h2>
+            <p className="text-slate-500 text-xs">
+              Welcome back — here's what's happening today.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <span className="material-symbols-outlined text-slate-400 text-[18px] absolute left-3 top-2.5 pointer-events-none">
+                search
+              </span>
+              <input
+                className="bg-surface-dark border border-white/10 rounded-full py-2 pl-9 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary/50 w-56"
+                placeholder="Search schools…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-white/5">
+              <span className="material-symbols-outlined">notifications</span>
+              <span className="absolute top-1.5 right-1.5 size-2 bg-red-500 rounded-full" />
+            </button>
+          </div>
+        </header>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* ── Stats ── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <StatCard
+                icon="school"
+                label="Total Schools"
+                value={fmtNumber(metrics?.total_schools)}
+                barWidth={75}
+                loading={metricsLoading}
+              />
+              <StatCard
+                icon="payments"
+                label="Total Revenue Collected"
+                value={fmtCurrency(metrics?.total_revenue)}
+                barWidth={60}
+                loading={metricsLoading}
+              />
+              <StatCard
+                icon="verified_user"
+                label="Active Licenses"
+                value={fmtNumber(metrics?.active_licenses)}
+                sub={activePct > 0 ? `${activePct}% utilisation` : undefined}
+                barWidth={activePct}
+                loading={metricsLoading}
+              />
+            </div>
+
+            {/* ── Secondary stats ── */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                {
+                  label: "Total Students",
+                  value: fmtNumber(metrics?.total_students),
+                  icon: "people",
+                },
+                {
+                  label: "Expired Licenses",
+                  value: fmtNumber(metrics?.expired_licenses),
+                  icon: "warning",
+                },
+                {
+                  label: "Suspended",
+                  value: fmtNumber(metrics?.suspended_licenses),
+                  icon: "block",
+                },
+                {
+                  label: "Total Licenses",
+                  value: fmtNumber(totalLicenses),
+                  icon: "key",
+                },
+              ].map(({ label, value, icon }) => (
+                <div
+                  key={label}
+                  className="bg-surface-dark rounded-xl p-4 border border-white/5 flex items-center gap-3"
+                >
+                  <div className="bg-white/5 p-2 rounded-lg">
+                    <span className="material-symbols-outlined text-slate-400 text-[20px]">
+                      {icon}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 text-xs">{label}</p>
+                    {metricsLoading ? (
+                      <div className="h-5 w-12 bg-white/10 rounded animate-pulse mt-1" />
+                    ) : (
+                      <p className="text-white font-bold text-base">{value}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Table toolbar ── */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex gap-2">
+                <div className="relative">
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="appearance-none bg-surface-dark border border-white/10 text-white text-sm rounded-lg pl-3 pr-8 py-2 focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+                    <span className="material-symbols-outlined text-[16px]">
+                      expand_more
+                    </span>
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg shadow-primary/20 transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  add
+                </span>
+                Add New School
+              </button>
+            </div>
+
+            {/* ── Schools Table ── */}
+            <div className="bg-surface-dark rounded-xl border border-white/5 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      {[
+                        "School Name",
+                        "Admin Contact",
+                        "Plan / Tier",
+                        "Students",
+                        "Status",
+                        "Renewal",
+                        "Actions",
+                      ].map((h, i) => (
+                        <th
+                          key={h}
+                          className={`p-4 text-xs font-semibold text-slate-400 uppercase tracking-wider ${i >= 3 ? "text-right" : ""} ${i === 4 ? "text-center" : ""}`}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {tableLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i}>
+                          {Array.from({ length: 7 }).map((__, j) => (
+                            <td key={j} className="p-4">
+                              <div className="h-4 bg-white/10 rounded animate-pulse" />
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    ) : schools.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="p-12 text-center text-slate-500"
+                        >
+                          <span className="material-symbols-outlined text-5xl block mb-3 opacity-30">
+                            domain_disabled
+                          </span>
+                          No schools found.
+                          {search && (
+                            <span className="block text-sm mt-1">
+                              Try clearing the search filter.
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ) : (
+                      schools.map((school) => (
+                        <tr
+                          key={school.school_id}
+                          className="group hover:bg-white/[0.025] transition-colors"
+                        >
+                          {/* Name */}
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`size-8 rounded bg-gradient-to-br ${avatarColor(school.school_id)} flex items-center justify-center text-white text-xs font-bold shadow-inner shrink-0`}
+                              >
+                                {getInitials(school.name)}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-white">
+                                  {school.name}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  ID: #
+                                  {String(school.school_id).padStart(4, "0")}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          {/* Admin */}
+                          <td className="p-4">
+                            <p className="text-sm text-slate-200">
+                              {school.admin_name || "—"}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {school.admin_email || school.contact_email}
+                            </p>
+                          </td>
+                          {/* Plan */}
+                          <td className="p-4">
+                            <PlanBadge plan={school.plan_name} />
+                          </td>
+                          {/* Students */}
+                          <td className="p-4 text-right text-sm text-slate-300 font-mono">
+                            {fmtNumber(school.student_count)}
+                          </td>
+                          {/* Status */}
+                          <td className="p-4 text-center">
+                            <StatusBadge status={school.license_status} />
+                          </td>
+                          {/* Renewal */}
+                          <td className="p-4 text-right text-sm text-slate-400">
+                            {school.end_date
+                              ? new Date(school.end_date).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  },
+                                )
+                              : "—"}
+                          </td>
+                          {/* Actions */}
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => navigate(`/superadmin/schools`)}
+                                title="View Details"
+                                className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  visibility
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => navigate(`/superadmin/licenses`)}
+                                title="Edit License"
+                                className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  key
+                                </span>
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleDelete(school.school_id, school.name)
+                                }
+                                title="Delete"
+                                className="p-1.5 rounded-md hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  delete
+                                </span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 bg-white/[0.01]">
+                <p className="text-xs text-slate-500">
+                  Showing{" "}
+                  <span className="text-white font-medium">
+                    {pagination.total === 0
+                      ? 0
+                      : (pagination.page - 1) * pagination.limit + 1}
+                    –
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total,
+                    )}
+                  </span>{" "}
+                  of{" "}
+                  <span className="text-white font-medium">
+                    {fmtNumber(pagination.total)}
+                  </span>{" "}
+                  schools
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    disabled={pagination.page <= 1 || tableLoading}
+                    onClick={() => fetchSchools(pagination.page - 1)}
+                    className="p-1.5 rounded hover:bg-white/10 text-slate-400 disabled:opacity-30 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      chevron_left
+                    </span>
+                  </button>
+                  {Array.from(
+                    { length: pagination.totalPages || 1 },
+                    (_, i) => i + 1,
+                  )
+                    .filter(
+                      (p) =>
+                        p === 1 ||
+                        p === pagination.totalPages ||
+                        Math.abs(p - pagination.page) <= 1,
+                    )
+                    .reduce((acc, p, idx, arr) => {
+                      if (idx > 0 && p - arr[idx - 1] > 1) acc.push("…");
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((p, i) =>
+                      p === "…" ? (
+                        <span
+                          key={`dot-${i}`}
+                          className="px-1 text-slate-600 text-sm"
+                        >
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={p}
+                          onClick={() => fetchSchools(p)}
+                          disabled={tableLoading}
+                          className={`size-7 rounded text-xs font-medium transition-colors ${
+                            p === pagination.page
+                              ? "bg-primary text-white shadow-sm"
+                              : "hover:bg-white/10 text-slate-400"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ),
+                    )}
+                  <button
+                    disabled={
+                      pagination.page >= (pagination.totalPages || 1) ||
+                      tableLoading
+                    }
+                    onClick={() => fetchSchools(pagination.page + 1)}
+                    className="p-1.5 rounded hover:bg-white/10 text-slate-400 disabled:opacity-30 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Modal ── */}
+      {showModal && (
+        <AddSchoolModal
+          onClose={() => setShowModal(false)}
+          onCreated={() => {
+            fetchSchools(1);
+            fetchMetrics();
+            showToast("School created successfully!");
+          }}
+        />
+      )}
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-sm font-medium transition-all duration-300 ${
+            toast.type === "error"
+              ? "bg-red-500/10 border-red-500/20 text-red-400"
+              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {toast.type === "error" ? "error" : "check_circle"}
+          </span>
+          {toast.msg}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default SuperAdminDashboard;
