@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
@@ -50,7 +52,62 @@ app.use(
 );
 app.use(requestLogger);
 
-// Health check endpoint
+// ── Swagger UI ────────────────────────────────────────────────────────────────
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "SchoolOS API Docs",
+    customCss: `
+      .topbar { background-color: #1e1b2e; }
+      .topbar-wrapper img { display: none; }
+      .topbar-wrapper::after {
+        content: "SchoolOS API";
+        color: #a78bfa;
+        font-size: 1.4rem;
+        font-weight: 700;
+        padding-left: 1rem;
+      }
+    `,
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      docExpansion: "none",
+      defaultModelsExpandDepth: 2,
+    },
+  }),
+);
+
+// Serve the raw OpenAPI JSON spec (useful for Postman / import)
+app.get("/api-docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
+// ── Health check ──────────────────────────────────────────────────────────────
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     tags: [Health]
+ *     summary: Server health check
+ *     description: >
+ *       Returns the current health status of the API server including uptime
+ *       and a UTC timestamp. No authentication required.
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Server is healthy and accepting requests.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ *             example:
+ *               status: OK
+ *               timestamp: "2024-06-01T10:00:00.000Z"
+ *               uptime: 3600.52
+ */
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
