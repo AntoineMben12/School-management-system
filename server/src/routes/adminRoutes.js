@@ -9,6 +9,17 @@ import {
   getReportsSummary,
   getClassesList,
 } from "../controllers/admin.quickaction.controller.js";
+import {
+  getCurrentTerm,
+  getSchoolClasses,
+  getTimetable,
+  getTimetableForExport,
+  getTeachers,
+  getSubjects,
+  createTimetableEntry,
+  updateTimetableEntry,
+  deleteTimetableEntry,
+} from "../controllers/admin.timetable.controller.js";
 
 const router = express.Router();
 
@@ -232,5 +243,297 @@ router.get("/reports", getReportsSummary);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get("/classes", getClassesList);
+
+/**
+ * @swagger
+ * /admin/timetable/current-term:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get current academic term
+ *     description: >
+ *       Returns the current active academic term for the school.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current term retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         description: No active term found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/timetable/current-term", getCurrentTerm);
+
+/**
+ * @swagger
+ * /admin/timetable/classes:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all classes for timetable
+ *     description: >
+ *       Returns all classes in the school for timetable configuration.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Classes retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/timetable/classes", getSchoolClasses);
+
+/**
+ * @swagger
+ * /admin/timetable/teachers:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get teachers with availability
+ *     description: >
+ *       Returns all teachers with their availability and assigned classes.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Teachers retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/timetable/teachers", getTeachers);
+
+/**
+ * @swagger
+ * /admin/timetable/subjects:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all available subjects
+ *     description: >
+ *       Returns all subjects available for scheduling in the school.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Subjects retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/timetable/subjects", getSubjects);
+
+/**
+ * @swagger
+ * /admin/timetable/export/all:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all timetables for export
+ *     description: >
+ *       Returns timetables for all classes in a term for PDF export.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: termId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The academic term ID
+ *     responses:
+ *       200:
+ *         description: Timetables retrieved successfully.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/timetable/export/all", getTimetableForExport);
+
+/**
+ * @swagger
+ * /admin/timetable/{classId}/{termId}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get timetable for a class
+ *     description: >
+ *       Returns the timetable for a specific class in a given term.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: classId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The class ID
+ *       - in: path
+ *         name: termId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The academic term ID
+ *     responses:
+ *       200:
+ *         description: Timetable retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/timetable/:classId/:termId", getTimetable);
+
+/**
+ * @swagger
+ * /admin/timetable:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a new timetable entry
+ *     description: >
+ *       Adds a new scheduled subject to the timetable. Validates for room and teacher conflicts.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - class_id
+ *               - subject_id
+ *               - day_of_week
+ *               - start_time
+ *               - end_time
+ *               - term_id
+ *             properties:
+ *               class_id:
+ *                 type: integer
+ *               subject_id:
+ *                 type: integer
+ *               teacher_id:
+ *                 type: integer
+ *               day_of_week:
+ *                 type: string
+ *                 enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday]
+ *               start_time:
+ *                 type: string
+ *                 format: time
+ *               end_time:
+ *                 type: string
+ *                 format: time
+ *               room_number:
+ *                 type: string
+ *               term_id:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Timetable entry created successfully.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post("/timetable", createTimetableEntry);
+
+/**
+ * @swagger
+ * /admin/timetable/{timetableId}:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Update a timetable entry
+ *     description: >
+ *       Updates an existing timetable entry (schedule adjustment).
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: timetableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The timetable entry ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               subject_id:
+ *                 type: integer
+ *               teacher_id:
+ *                 type: integer
+ *               day_of_week:
+ *                 type: string
+ *               start_time:
+ *                 type: string
+ *                 format: time
+ *               end_time:
+ *                 type: string
+ *                 format: time
+ *               room_number:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Timetable entry updated successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.put("/timetable/:timetableId", updateTimetableEntry);
+
+/**
+ * @swagger
+ * /admin/timetable/{timetableId}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Delete a timetable entry
+ *     description: >
+ *       Removes a scheduled subject from the timetable.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: timetableId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The timetable entry ID
+ *     responses:
+ *       200:
+ *         description: Timetable entry deleted successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.delete("/timetable/:timetableId", deleteTimetableEntry);
 
 export default router;
