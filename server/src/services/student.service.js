@@ -362,6 +362,332 @@ class StudentService {
         if (score >= 50) return 'E';
         return 'F';
     }
+
+    // ====== ADMIN STUDENT REGISTRY ======
+
+    /**
+     * Get all students for a school with optional filters
+     */
+    static async getAllStudents(schoolId, filters = {}) {
+        try {
+            let query = `
+              SELECT
+                s.student_id as id,
+                s.first_name as fn,
+                s.last_name as ln,
+                s.dob,
+                s.gender,
+                s.blood_type as blood,
+                s.address as addr,
+                s.enrollment_date as enr,
+                s.status,
+                s.gpa,
+                s.attendance_percentage as att,
+                s.fee_status as fee,
+                c.grade_level as grade,
+                c.section,
+                CONCAT(p.first_name, ' ', p.last_name) as parent,
+                p.phone as pPhone,
+                p.email as pEmail
+              FROM students s
+              LEFT JOIN classes c ON s.class_id = c.class_id
+              LEFT JOIN parents p ON s.parent_id = p.parent_id
+              WHERE s.school_id = ?
+            `;
+
+            const params = [schoolId];
+
+            if (filters.grade) {
+                query += ` AND c.grade_level = ?`;
+                params.push(filters.grade);
+            }
+
+            if (filters.section) {
+                query += ` AND c.section = ?`;
+                params.push(filters.section);
+            }
+
+            if (filters.status) {
+                query += ` AND s.status = ?`;
+                params.push(filters.status);
+            }
+
+            if (filters.feeStatus) {
+                query += ` AND s.fee_status = ?`;
+                params.push(filters.feeStatus);
+            }
+
+            if (filters.search) {
+                query += ` AND (s.first_name LIKE ? OR s.last_name LIKE ? OR s.student_id LIKE ?)`;
+                const searchTerm = `%${filters.search}%`;
+                params.push(searchTerm, searchTerm, searchTerm);
+            }
+
+            query += ` ORDER BY s.first_name, s.last_name`;
+
+            const [rows] = await db.query(query, params);
+
+            return rows.map(row => ({
+                ...row,
+                name: `${row.fn} ${row.ln}`,
+                subs: [],
+                inc: []
+            }));
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Get a single student by ID
+     */
+    static async getStudentById(schoolId, studentId) {
+        try {
+            const query = `
+              SELECT
+                s.student_id as id,
+                s.first_name as fn,
+                s.last_name as ln,
+                s.dob,
+                s.gender,
+                s.blood_type as blood,
+                s.address as addr,
+                s.enrollment_date as enr,
+                s.status,
+                s.gpa,
+                s.attendance_percentage as att,
+                s.fee_status as fee,
+                c.grade_level as grade,
+                c.section,
+                CONCAT(p.first_name, ' ', p.last_name) as parent,
+                p.phone as pPhone,
+                p.email as pEmail
+              FROM students s
+              LEFT JOIN classes c ON s.class_id = c.class_id
+              LEFT JOIN parents p ON s.parent_id = p.parent_id
+              WHERE s.school_id = ? AND s.student_id = ?
+            `;
+
+            const [rows] = await db.query(query, [schoolId, studentId]);
+
+            if (rows.length === 0) {
+                throw new Error('Student not found');
+            }
+
+            const student = rows[0];
+
+            return {
+                ...student,
+                name: `${student.fn} ${student.ln}`,
+                subs: [],
+                inc: []
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Create a new student
+     */
+    static async createStudent(schoolId, studentData) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            if (!studentData.fn || !studentData.ln || !studentData.grade || !studentData.sec) {
+                throw new Error('Missing required fields');
+            }
+
+            const [classes] = await connection.query(
+                'SELECT class_id FROM classes WHERE school_id = ? AND grade_level = ? AND section = ?',
+                [schoolId, Number(studentData.grade), studentData.sec]
+            );
+
+            let classId = classes[0]?.class_id;
+            if (!classId) {
+                const [result] = await connection.query(
+                    'INSERT INTO classes (school_id, grade_level, section, name) VALUES (?, ?, ?, ?)',
+                    [schoolId, Number(studentData.grade), studentData.sec, `Grade ${studentData.grade} - Section ${studentData.sec}`]
+                );
+                classId = result.insertId;
+            }
+
+            let parentId = null;
+            if (studentData.parent || studentData.pEmail) {
+                if (studentData.pEmail) {
+                    const [parents] = await connection.query(
+                        'SELECT parent_id FROM parents WHERE school_id = ? AND email = ?',
+                        [schoolId, studentData.pEmail]
+                    );
+                    parentId = parents[0]?.parent_id;
+                }
+
+                if (!parentId) {
+                    const nameParts = (studentData.parent || 'Parent Guardian').split(' ');
+                    const [parentResult] = await connection.query(
+                        `INSERT INTO parents (school_id, first_name, last_name, phone, email)
+                         VALUES (?, ?, ?, ?, ?)`,
+                        [schoolId, nameParts[0], nameParts.slice(1).join(' ') || '', studentData.pPhone || '', studentData.pEmail || '']
+                    );
+                    parentId = parentResult.insertId;
+                }
+            }
+
+            const [studentResult] = await connection.query(
+                `INSERT INTO students (
+                  school_id, class_id, parent_id, first_name, last_name, dob,
+                  gender, blood_type, address, enrollment_date, status,
+                  gpa, attendance_percentage, fee_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    schoolId,
+                    classId,
+                    parentId,
+                    studentData.fn,
+                    studentData.ln,
+                    studentData.dob || null,
+                    studentData.gender || 'Female',
+                    studentData.blood || 'A+',
+                    studentData.addr || '',
+                    studentData.enr || new Date().toISOString().split('T')[0],
+                    'Active',
+                    0,
+                    100,
+                    'Paid'
+                ]
+            );
+
+            await connection.commit();
+
+            return {
+                id: studentResult.insertId,
+                name: `${studentData.fn} ${studentData.ln}`,
+                message: 'Student created successfully'
+            };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    /**
+     * Update a student
+     */
+    static async updateStudent(schoolId, studentId, updates) {
+        try {
+            const [current] = await db.query(
+                'SELECT * FROM students WHERE school_id = ? AND student_id = ?',
+                [schoolId, studentId]
+            );
+
+            if (current.length === 0) {
+                throw new Error('Student not found');
+            }
+
+            const fieldsToUpdate = {};
+
+            if (updates.fn) fieldsToUpdate.first_name = updates.fn;
+            if (updates.ln) fieldsToUpdate.last_name = updates.ln;
+            if (updates.gender) fieldsToUpdate.gender = updates.gender;
+            if (updates.blood) fieldsToUpdate.blood_type = updates.blood;
+            if (updates.addr) fieldsToUpdate.address = updates.addr;
+            if (updates.status) fieldsToUpdate.status = updates.status;
+            if (updates.gpa !== undefined) fieldsToUpdate.gpa = updates.gpa;
+            if (updates.att !== undefined) fieldsToUpdate.attendance_percentage = updates.att;
+            if (updates.fee) fieldsToUpdate.fee_status = updates.fee;
+
+            if (Object.keys(fieldsToUpdate).length === 0) {
+                return { affectedRows: 0 };
+            }
+
+            const setClause = Object.keys(fieldsToUpdate).map(key => `${key} = ?`).join(', ');
+            const fieldValues = Object.values(fieldsToUpdate);
+
+            const [result] = await db.query(
+                `UPDATE students SET ${setClause} WHERE school_id = ? AND student_id = ?`,
+                [...fieldValues, schoolId, studentId]
+            );
+
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a student
+     */
+    static async deleteStudent(schoolId, studentId) {
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const [result] = await connection.query(
+                'DELETE FROM students WHERE school_id = ? AND student_id = ?',
+                [schoolId, studentId]
+            );
+
+            await connection.commit();
+            return result;
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+    /**
+     * Get grades and sections for a school
+     */
+    static async getGradesAndSections(schoolId) {
+        try {
+            const [rows] = await db.query(
+                `SELECT DISTINCT grade_level as grade, section
+                 FROM classes
+                 WHERE school_id = ?
+                 ORDER BY grade_level, section`,
+                [schoolId]
+            );
+
+            const grades = [...new Set(rows.map(r => r.grade))].sort((a, b) => a - b);
+            const sections = [...new Set(rows.map(r => r.section))].sort();
+
+            return { grades, sections };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Get student statistics
+     */
+    static async getStudentStats(schoolId) {
+        try {
+            const [stats] = await db.query(
+                `SELECT
+                  COUNT(*) as total,
+                  SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active,
+                  SUM(CASE WHEN fee_status = 'Owing' THEN 1 ELSE 0 END) as owing,
+                  SUM(CASE WHEN attendance_percentage < 70 THEN 1 ELSE 0 END) as lowAtt
+                 FROM students
+                 WHERE school_id = ?`,
+                [schoolId]
+            );
+
+            return {
+                total: stats[0].total || 0,
+                active: stats[0].active || 0,
+                owing: stats[0].owing || 0,
+                lowAtt: stats[0].lowAtt || 0
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
 }
 
 export default StudentService;

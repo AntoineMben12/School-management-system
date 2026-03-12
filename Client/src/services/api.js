@@ -270,6 +270,338 @@ export const adminAPI = {
     }
     return response.json();
   },
+
+  /**
+   * Get all students with optional filters
+   * @param {Object} filters - { grade, section, status, feeStatus, search }
+   * @returns {Promise<Array>} List of students
+   */
+  getAllStudents: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.grade) params.append("grade", filters.grade);
+    if (filters.section) params.append("section", filters.section);
+    if (filters.status) params.append("status", filters.status);
+    if (filters.feeStatus) params.append("feeStatus", filters.feeStatus);
+    if (filters.search) params.append("search", filters.search);
+
+    const response = await fetch(
+      `${API_BASE_URL}/admin/students?${params}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...authAPI.getAuthHeader(),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || "Failed to fetch students"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Get student statistics
+   * @returns {Promise<Object>} Student statistics
+   */
+  getStudentStats: async () => {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/students/stats/overview`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...authAPI.getAuthHeader(),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || "Failed to fetch stats");
+    }
+    return response.json();
+  },
+
+  /**
+   * Get grades and sections
+   * @returns {Promise<Object>} { grades, sections }
+   */
+  getGradesAndSections: async () => {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/students/filter/grades-sections`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...authAPI.getAuthHeader(),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || "Failed to fetch grades and sections"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Get a specific student by ID
+   * @param {number} studentId - The student ID
+   * @returns {Promise<Object>} Student details
+   */
+  getStudentById: async (studentId) => {
+    const response = await fetch(`${API_BASE_URL}/admin/students/${studentId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || "Failed to fetch student"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Create a new student
+   * @param {Object} studentData - Student information
+   * @returns {Promise<Object>} Created student
+   */
+  createStudent: async (studentData) => {
+    const response = await fetch(`${API_BASE_URL}/admin/students`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(studentData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message ||
+          errorData.message ||
+          "Failed to create student"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Update a student
+   * @param {number} studentId - The student ID
+   * @param {Object} updates - Updated student data
+   * @returns {Promise<Object>} Update response
+   */
+  updateStudent: async (studentId, updates) => {
+    const response = await fetch(`${API_BASE_URL}/admin/students/${studentId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message ||
+          errorData.message ||
+          "Failed to update student"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a student
+   * @param {number} studentId - The student ID
+   * @returns {Promise<Object>} Delete response
+   */
+  deleteStudent: async (studentId) => {
+    const response = await fetch(`${API_BASE_URL}/admin/students/${studentId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message ||
+          errorData.message ||
+          "Failed to delete student"
+      );
+    }
+    return response.json();
+  },
+
+  // ===== CLASS MANAGEMENT =====
+
+  /**
+   * Get all classes with optional filters
+   * @param {Object} filters - { grade, section, search }
+   * @returns {Promise<Array>} List of classes
+   */
+  getAllClasses: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.grade) params.append("grade", filters.grade);
+    if (filters.section) params.append("section", filters.section);
+    if (filters.search) params.append("search", filters.search);
+
+    const response = await fetch(
+      `${API_BASE_URL}/admin/classes?${params}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...authAPI.getAuthHeader(),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || "Failed to fetch classes"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Get class statistics
+   * @returns {Promise<Object>} Class statistics
+   */
+  getClassStats: async () => {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/classes/stats/overview`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...authAPI.getAuthHeader(),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || "Failed to fetch stats");
+    }
+    return response.json();
+  },
+
+  /**
+   * Get a specific class by ID
+   * @param {number} classId - The class ID
+   * @returns {Promise<Object>} Class details
+   */
+  getClassById: async (classId) => {
+    const response = await fetch(`${API_BASE_URL}/admin/classes/${classId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || "Failed to fetch class"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Create a new class
+   * @param {Object} classData - Class information
+   * @returns {Promise<Object>} Created class
+   */
+  createClass: async (classData) => {
+    const response = await fetch(`${API_BASE_URL}/admin/classes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(classData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message ||
+          errorData.message ||
+          "Failed to create class"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Update a class
+   * @param {number} classId - The class ID
+   * @param {Object} updates - Updated class data
+   * @returns {Promise<Object>} Update response
+   */
+  updateClass: async (classId, updates) => {
+    const response = await fetch(`${API_BASE_URL}/admin/classes/${classId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message ||
+          errorData.message ||
+          "Failed to update class"
+      );
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a class
+   * @param {number} classId - The class ID
+   * @returns {Promise<Object>} Delete response
+   */
+  deleteClass: async (classId) => {
+    const response = await fetch(`${API_BASE_URL}/admin/classes/${classId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...authAPI.getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message ||
+          errorData.message ||
+          "Failed to delete class"
+      );
+    }
+    return response.json();
+  },
 };
 
 export default authAPI;

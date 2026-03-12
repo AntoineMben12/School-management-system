@@ -20,6 +20,23 @@ import {
   updateTimetableEntry,
   deleteTimetableEntry,
 } from "../controllers/admin.timetable.controller.js";
+import {
+  getAllStudents,
+  getStudentById,
+  createStudent,
+  updateStudent,
+  deleteStudent,
+  getGradesAndSections,
+  getStudentStats,
+} from "../controllers/student.controller.js";
+import {
+  getAllClasses,
+  getClassById,
+  createClass,
+  updateClass,
+  deleteClass,
+  getClassStats,
+} from "../controllers/class.controller.js";
 
 const router = express.Router();
 
@@ -535,5 +552,437 @@ router.put("/timetable/:timetableId", updateTimetableEntry);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.delete("/timetable/:timetableId", deleteTimetableEntry);
+
+/**
+ * @swagger
+ * /admin/students/stats/overview:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get student statistics
+ *     description: >
+ *       Returns aggregated student stats for the school.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/students/stats/overview", getStudentStats);
+
+/**
+ * @swagger
+ * /admin/students/filter/grades-sections:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get grades and sections
+ *     description: >
+ *       Returns all available grades and sections for filtering.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Grades and sections retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/students/filter/grades-sections", getGradesAndSections);
+
+/**
+ * @swagger
+ * /admin/students:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all students
+ *     description: >
+ *       Returns all students for the school with optional filters.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: grade
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: section
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: feeStatus
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Students retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/students", getAllStudents);
+
+/**
+ * @swagger
+ * /admin/students:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a new student
+ *     description: >
+ *       Adds a new student to the school.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fn
+ *               - ln
+ *               - grade
+ *               - sec
+ *             properties:
+ *               fn:
+ *                 type: string
+ *               ln:
+ *                 type: string
+ *               dob:
+ *                 type: string
+ *                 format: date
+ *               gender:
+ *                 type: string
+ *               blood:
+ *                 type: string
+ *               addr:
+ *                 type: string
+ *               grade:
+ *                 type: integer
+ *               sec:
+ *                 type: string
+ *               enr:
+ *                 type: string
+ *                 format: date
+ *               parent:
+ *                 type: string
+ *               pPhone:
+ *                 type: string
+ *               pEmail:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Student created successfully.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post("/students", createStudent);
+
+/**
+ * @swagger
+ * /admin/students/{studentId}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get student by ID
+ *     description: >
+ *       Returns detailed information for a specific student.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Student retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         description: Student not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/students/:studentId", getStudentById);
+
+/**
+ * @swagger
+ * /admin/students/{studentId}:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Update a student
+ *     description: >
+ *       Updates student information.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Student updated successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.put("/students/:studentId", updateStudent);
+
+/**
+ * @swagger
+ * /admin/students/{studentId}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Delete a student
+ *     description: >
+ *       Removes a student from the system.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Student deleted successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.delete("/students/:studentId", deleteStudent);
+
+/**
+ * @swagger
+ * /admin/classes/stats/overview:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get class statistics
+ *     description: >
+ *       Returns aggregated class stats for the school.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/classes/stats/overview", getClassStats);
+
+/**
+ * @swagger
+ * /admin/classes:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all classes
+ *     description: >
+ *       Returns all classes for the school with optional filters.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: grade
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: section
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Classes retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/classes", getAllClasses);
+
+/**
+ * @swagger
+ * /admin/classes:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a new class
+ *     description: >
+ *       Adds a new class to the school.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - grade
+ *             properties:
+ *               name:
+ *                 type: string
+ *               grade:
+ *                 type: integer
+ *               section:
+ *                 type: string
+ *               class_teacher_id:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Class created successfully.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post("/classes", createClass);
+
+/**
+ * @swagger
+ * /admin/classes/{classId}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get class by ID
+ *     description: >
+ *       Returns detailed information for a specific class.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: classId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Class retrieved successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         description: Class not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get("/classes/:classId", getClassById);
+
+/**
+ * @swagger
+ * /admin/classes/{classId}:
+ *   put:
+ *     tags: [Admin]
+ *     summary: Update a class
+ *     description: >
+ *       Updates class information.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: classId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Class updated successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.put("/classes/:classId", updateClass);
+
+/**
+ * @swagger
+ * /admin/classes/{classId}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Delete a class
+ *     description: >
+ *       Removes a class from the system.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: classId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Class deleted successfully.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.delete("/classes/:classId", deleteClass);
 
 export default router;
